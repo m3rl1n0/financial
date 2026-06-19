@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body { font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: #c6c6c6; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  @keyframes cadFade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes cadSlideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  input::placeholder, textarea::placeholder { color: #a8a8a8; }
+  select, input, textarea, button { font-family: inherit; }
+</style>
+</helmet>
+
+<div style="display:flex; flex-direction:column; height:100vh; background:#f4f4f4; color:#161616; font-size:14px; line-height:1.4;">
+
+  <!-- ============ HEADER ============ -->
+  <header style="flex:none; height:48px; background:#161616; color:#f4f4f4; display:flex; align-items:center; border-bottom:1px solid #393939;">
+    <button onClick="{{ toggleNav }}" style="width:48px; height:48px; border:none; background:transparent; color:#f4f4f4; cursor:pointer; display:flex; align-items:center; justify-content:center;" style-hover="background:#2c2c2c;">
+      <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><rect x="2" y="3.5" width="12" height="1"></rect><rect x="2" y="7.5" width="12" height="1"></rect><rect x="2" y="11.5" width="12" height="1"></rect></svg>
+    </button>
+    <div style="display:flex; align-items:baseline; gap:8px; padding-left:8px; white-space:nowrap;">
+      <span style="font-size:16px; font-weight:600; letter-spacing:0.01em;">Cadenza</span>
+      <span style="font-size:14px; color:#8d8d8d;">Spese ricorrenti</span>
+    </div>
+    <div style="flex:1;"></div>
+    <button style="width:48px; height:48px; border:none; background:transparent; color:#f4f4f4; cursor:pointer; display:flex; align-items:center; justify-content:center;" style-hover="background:#2c2c2c;">
+      <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M11.3 10.6l3 3-.7.7-3-3a4.5 4.5 0 1 1 .7-.7zM7.5 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"></path></svg>
+    </button>
+    <button style="width:48px; height:48px; border:none; background:transparent; color:#f4f4f4; cursor:pointer; display:flex; align-items:center; justify-content:center; position:relative;" style-hover="background:#2c2c2c;">
+      <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M13 11l-1-1V7a4 4 0 0 0-3-3.9V3a1 1 0 0 0-2 0v.1A4 4 0 0 0 4 7v3l-1 1v1h10zm-5 3a1.5 1.5 0 0 0 1.5-1.5h-3A1.5 1.5 0 0 0 8 14z"></path></svg>
+      <span style="position:absolute; top:12px; right:12px; width:6px; height:6px; border-radius:50%; background:#fa4d56;"></span>
+    </button>
+    <div style="width:48px; height:48px; display:flex; align-items:center; justify-content:center;">
+      <div style="width:28px; height:28px; border-radius:50%; background:#393939; color:#f4f4f4; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600;">MR</div>
+    </div>
+  </header>
+
+  <div style="flex:1; display:flex; min-height:0;">
+
+    <!-- ============ SIDE NAV ============ -->
+    <sc-if value="{{ navOpen }}" hint-placeholder-val="{{ true }}">
+    <nav style="flex:none; width:256px; background:#f4f4f4; border-right:1px solid #e0e0e0; display:flex; flex-direction:column; padding-top:8px;">
+      <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="3">
+        <button onClick="{{ n.go }}" style="height:48px; border:none; background:{{ n.bg }}; color:{{ n.color }}; cursor:pointer; display:flex; align-items:center; gap:12px; padding:0 16px; text-align:left; font-size:14px; font-weight:{{ n.weight }}; border-left:3px solid {{ n.bar }};" style-hover="background:#e8e8e8;" data-comment-anchor="f50346fc99-button">
+          <span style="width:16px; height:16px; display:inline-flex; align-items:center; justify-content:center;" innerHTML="{{ n.icon }}"></span>
+          {{ n.label }}
+        </button>
+      </sc-for>
+      <div style="flex:1;"></div>
+      <div style="padding:16px; border-top:1px solid #e0e0e0; color:#6f6f6f; font-size:12px; line-height:1.5;">
+        <div style="font-family:'IBM Plex Mono', monospace; color:#8d8d8d;">Giugno 2026</div>
+        Aggiornato oggi · 19 giu
+      </div>
+    </nav>
+    </sc-if>
+
+    <!-- ============ MAIN ============ -->
+    <main style="flex:1; overflow:auto; min-width:0;">
+
+      <!-- ============ OVERVIEW SCREEN ============ -->
+      <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+      <div data-screen-label="Panoramica" style="max-width:1200px; margin:0 auto; padding:24px 32px 64px;">
+
+        <!-- page header -->
+        <div style="display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:16px; margin-bottom:24px;">
+          <div>
+            <div style="font-size:12px; letter-spacing:0.32px; color:#6f6f6f; text-transform:uppercase; margin-bottom:4px;">Panoramica</div>
+            <h1 style="margin:0; font-size:28px; font-weight:400; line-height:1.25;">Quanto spendo questo mese</h1>
+          </div>
+          <div style="display:flex; align-items:stretch; gap:8px;">
+            <div style="display:flex; align-items:center; border:1px solid #e0e0e0; background:#fff; height:40px;">
+              <button onClick="{{ prevMonth }}" style="width:40px; height:40px; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#161616;" style-hover="background:#e8e8e8;">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M10 13L5 8l5-5 .7.7L6.4 8l4.3 4.3z"></path></svg>
+              </button>
+              <div style="min-width:128px; text-align:center; font-size:14px; font-weight:500;">{{ monthLabel }}</div>
+              <button onClick="{{ nextMonth }}" style="width:40px; height:40px; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#161616;" style-hover="background:#e8e8e8;">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5-.7-.7L9.6 8 5.3 3.7z"></path></svg>
+              </button>
+            </div>
+            <button onClick="{{ openAdd }}" style="height:40px; border:none; background:{{ accent }}; color:#fff; cursor:pointer; display:flex; align-items:center; gap:24px; padding:0 16px; font-size:14px;" style-hover="background:#0353e9;">
+              Aggiungi spesa
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8.5 3v4.5H13v1H8.5V13h-1V8.5H3v-1h4.5V3z"></path></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI row -->
+        <div style="display:flex; flex-wrap:wrap; gap:1px; background:#e0e0e0; margin-bottom:1px;">
+          <div style="flex:2 1 320px; background:#fff; padding:20px 24px; min-width:280px;">
+            <div style="font-size:12px; color:#6f6f6f; margin-bottom:4px;">Totale di {{ monthShort }}</div>
+            <div style="font-size:42px; font-weight:300; line-height:1.1; letter-spacing:-0.01em;">{{ kpiTotal }}</div>
+            <div style="display:flex; align-items:center; gap:6px; margin-top:8px; font-size:13px; color:{{ deltaColor }};">
+              <span innerHTML="{{ deltaIcon }}"></span>
+              <span style="font-weight:500;">{{ deltaText }}</span>
+              <span style="color:#6f6f6f;">vs {{ prevMonthShort }}</span>
+            </div>
+          </div>
+          <div style="flex:1 1 180px; background:#fff; padding:20px 24px; min-width:160px;">
+            <div style="font-size:12px; color:#6f6f6f; margin-bottom:8px;">Pagamenti attivi</div>
+            <div style="font-size:32px; font-weight:300; line-height:1;">{{ activeCount }}</div>
+            <div style="font-size:13px; color:#6f6f6f; margin-top:6px;">{{ chargingCount }} addebitati a {{ monthShort }}</div>
+          </div>
+          <div style="flex:1 1 200px; background:#fff; padding:20px 24px; min-width:180px;">
+            <div style="font-size:12px; color:#6f6f6f; margin-bottom:8px;">Prossimo addebito</div>
+            <div style="font-size:16px; font-weight:600; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ nextName }}</div>
+            <div style="display:flex; align-items:baseline; gap:8px; margin-top:6px;">
+              <span style="font-size:13px; color:#6f6f6f;">{{ nextDate }}</span>
+              <span style="font-size:14px; font-weight:500;">{{ nextAmount }}</span>
+            </div>
+          </div>
+          <div style="flex:1 1 180px; background:#fff; padding:20px 24px; min-width:160px;">
+            <div style="font-size:12px; color:#6f6f6f; margin-bottom:8px;">Media mensile 2026</div>
+            <div style="font-size:32px; font-weight:300; line-height:1;">{{ avgMonthly }}</div>
+            <div style="font-size:13px; color:#6f6f6f; margin-top:6px;">{{ yearTotal }} nell'anno</div>
+          </div>
+        </div>
+
+        <!-- charts row -->
+        <div style="display:flex; flex-wrap:wrap; gap:16px; margin-top:16px;">
+
+          <!-- TREND -->
+          <section style="flex:2 1 460px; background:#fff; min-width:340px; display:flex; flex-direction:column;">
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; padding:16px 24px 0;">
+              <div>
+                <div style="font-size:16px; font-weight:600;">Andamento mensile</div>
+                <div style="font-size:12px; color:#6f6f6f;">Totale addebitato per mese · 2026</div>
+              </div>
+              <div style="display:flex; border:1px solid #e0e0e0;">
+                <button onClick="{{ setTrendTotal }}" style="height:32px; padding:0 14px; border:none; cursor:pointer; font-size:13px; background:{{ trendTotalBg }}; color:{{ trendTotalColor }};">Totale</button>
+                <button onClick="{{ setTrendCat }}" style="height:32px; padding:0 14px; border:none; border-left:1px solid #e0e0e0; cursor:pointer; font-size:13px; background:{{ trendCatBg }}; color:{{ trendCatColor }};">Per categoria</button>
+              </div>
+            </div>
+
+            <div style="position:relative; padding:24px 24px 8px 56px;">
+              <!-- gridlines -->
+              <div style="position:absolute; left:56px; right:24px; top:24px; bottom:32px; display:flex; flex-direction:column; justify-content:space-between;">
+                <sc-for list="{{ gridLines }}" as="g" hint-placeholder-count="4">
+                  <div style="border-top:1px solid #f4f4f4; position:relative;">
+                    <span style="position:absolute; left:-2px; top:-8px; transform:translateX(-100%); font-size:10px; color:#a8a8a8; font-family:'IBM Plex Mono', monospace; padding-right:6px;">{{ g.label }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <!-- line chart -->
+              <div style="position:relative; height:200px;">
+                <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute; inset:0; width:100%; height:100%; overflow:visible;" data-comment-anchor="1d8e393f24-div">
+                  <sc-for list="{{ lines }}" as="ln" hint-placeholder-count="1">
+                    <polyline points="{{ ln.points }}" fill="none" stroke="{{ ln.color }}" stroke-width="1.5" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"></polyline>
+                  </sc-for>
+                </svg>
+                <sc-for list="{{ dots }}" as="d" hint-placeholder-count="0">
+                  <div style="position:absolute; left:{{ d.left }}%; bottom:{{ d.bottom }}px; width:7px; height:7px; border-radius:50%; background:{{ d.color }}; box-shadow:0 0 0 2px #fff; transform:translate(-50%,50%);"></div>
+                </sc-for>
+                <div style="position:absolute; inset:0; display:flex; gap:6px;">
+                  <sc-for list="{{ bars }}" as="b" hint-placeholder-count="12">
+                    <div onMouseEnter="{{ b.enter }}" onMouseLeave="{{ clearHover }}" onClick="{{ b.click }}" style="flex:1; height:100%; cursor:pointer;"></div>
+                  </sc-for>
+                </div>
+                <!-- tooltip -->
+                <sc-if value="{{ hoverActive }}" hint-placeholder-val="{{ false }}">
+                  <div style="position:absolute; left:{{ hoverLeft }}%; bottom:{{ hoverBottom }}px; transform:translate(-50%,0); background:#161616; color:#fff; padding:8px 12px; font-size:12px; white-space:nowrap; pointer-events:none; z-index:5; box-shadow:0 2px 6px rgba(0,0,0,.3);">
+                    <div style="font-weight:600; margin-bottom:2px;">{{ hoverTitle }}</div>
+                    <div style="font-family:'IBM Plex Mono', monospace;">{{ hoverValue }}</div>
+                  </div>
+                </sc-if>
+              </div>
+              <!-- x labels -->
+              <div style="display:flex; gap:6px; margin-top:8px;">
+                <sc-for list="{{ bars }}" as="b" hint-placeholder-count="12">
+                  <div style="flex:1; text-align:center; font-size:11px; color:{{ b.labelColor }}; font-weight:{{ b.labelWeight }};">{{ b.label }}</div>
+                </sc-for>
+              </div>
+            </div>
+
+            <!-- legend -->
+            <div style="display:flex; flex-wrap:wrap; gap:16px; padding:8px 24px 20px;">
+              <sc-for list="{{ legend }}" as="c" hint-placeholder-count="4">
+                <div style="display:flex; align-items:center; gap:6px; font-size:12px; color:#525252; white-space:nowrap;">
+                  <span style="width:10px; height:10px; background:{{ c.color }};"></span>{{ c.label }}
+                </div>
+              </sc-for>
+            </div>
+          </section>
+
+          <!-- BREAKDOWN -->
+          <section style="flex:1 1 300px; background:#fff; min-width:280px; padding:16px 24px 20px;">
+            <div style="font-size:16px; font-weight:600;">Spesa per categoria</div>
+            <div style="font-size:12px; color:#6f6f6f; margin-bottom:20px;">{{ monthLabel }}</div>
+            <div style="display:flex; height:12px; width:100%; margin-bottom:20px; overflow:hidden;">
+              <sc-for list="{{ breakdown }}" as="s" hint-placeholder-count="4">
+                <div style="width:{{ s.pct }}%; background:{{ s.color }};"></div>
+              </sc-for>
+            </div>
+            <div style="display:flex; flex-direction:column;">
+              <sc-for list="{{ breakdown }}" as="s" hint-placeholder-count="4">
+                <div style="display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid #f4f4f4;">
+                  <span style="width:10px; height:10px; background:{{ s.color }}; flex:none;"></span>
+                  <span style="flex:1; font-size:14px;">{{ s.label }}</span>
+                  <span style="font-size:12px; color:#6f6f6f; font-family:'IBM Plex Mono', monospace; min-width:38px; text-align:right;">{{ s.pctLabel }}</span>
+                  <span style="font-size:14px; font-weight:500; min-width:90px; text-align:right;">{{ s.amount }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </section>
+        </div>
+
+        <!-- upcoming + table row -->
+        <div style="display:flex; flex-wrap:wrap; gap:16px; margin-top:16px;">
+
+          <!-- UPCOMING -->
+          <section style="flex:1 1 300px; background:#fff; min-width:280px; padding:16px 0 8px;">
+            <div style="padding:0 24px 12px; font-size:16px; font-weight:600;">Prossimi addebiti</div>
+            <sc-for list="{{ upcoming }}" as="u" hint-placeholder-count="5">
+              <div style="display:flex; align-items:center; gap:14px; padding:12px 24px; border-top:1px solid #f4f4f4;">
+                <div style="flex:none; width:44px; text-align:center;">
+                  <div style="font-size:18px; font-weight:600; line-height:1;">{{ u.day }}</div>
+                  <div style="font-size:11px; color:#6f6f6f; text-transform:uppercase;">{{ u.mon }}</div>
+                </div>
+                <div style="flex:1; min-width:0;">
+                  <div style="font-size:14px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ u.name }}</div>
+                  <span style="display:inline-block; margin-top:4px; font-size:11px; padding:1px 8px; border-radius:12px; white-space:nowrap; background:{{ u.tagBg }}; color:{{ u.tagText }};">{{ u.catLabel }}</span>
+                </div>
+                <div style="font-size:14px; font-weight:500; font-family:'IBM Plex Mono', monospace;">{{ u.amount }}</div>
+              </div>
+            </sc-for>
+          </section>
+
+          <!-- TABLE -->
+          <section style="flex:2 1 520px; background:#fff; min-width:340px; display:flex; flex-direction:column;">
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; padding:16px 24px;">
+              <div style="font-size:16px; font-weight:600;">Tutte le spese ricorrenti</div>
+              <div style="font-size:12px; color:#6f6f6f;">{{ rowCount }} voci</div>
+            </div>
+            <!-- filter tabs -->
+            <div style="display:flex; gap:0; padding:0 16px; border-bottom:1px solid #e0e0e0; overflow-x:auto;">
+              <sc-for list="{{ filterTabs }}" as="t" hint-placeholder-count="5">
+                <button onClick="{{ t.click }}" style="height:40px; padding:0 12px; border:none; background:transparent; cursor:pointer; font-size:13px; white-space:nowrap; color:{{ t.color }}; font-weight:{{ t.weight }}; border-bottom:2px solid {{ t.bar }};">{{ t.label }}</button>
+              </sc-for>
+            </div>
+            <!-- header -->
+            <div style="display:flex; align-items:center; height:40px; background:#f4f4f4; border-bottom:1px solid #e0e0e0; font-size:12px; font-weight:600; color:#161616; padding:0 16px;">
+              <button onClick="{{ sortName }}" style="flex:2.4; min-width:120px; text-align:left; border:none; background:transparent; cursor:pointer; font:inherit; font-weight:600; display:flex; align-items:center; gap:4px; padding:0;">Nome <span innerHTML="{{ sortNameIcon }}"></span></button>
+              <div style="flex:1.3; min-width:96px;">Categoria</div>
+              <button onClick="{{ sortAmount }}" style="flex:1; min-width:84px; text-align:right; justify-content:flex-end; border:none; background:transparent; cursor:pointer; font:inherit; font-weight:600; display:flex; align-items:center; gap:4px; padding:0;">Importo <span innerHTML="{{ sortAmountIcon }}"></span></button>
+              <div style="flex:1.1; min-width:92px; text-align:left; padding-left:16px;">Ricorrenza</div>
+              <div style="flex:1; min-width:80px;">Inizio</div>
+              <div style="flex:1; min-width:80px;">Fine</div>
+              <button onClick="{{ sortNext }}" style="flex:1.1; min-width:96px; text-align:right; justify-content:flex-end; border:none; background:transparent; cursor:pointer; font:inherit; font-weight:600; display:flex; align-items:center; gap:4px; padding:0;">Prossimo <span innerHTML="{{ sortNextIcon }}"></span></button>
+              <div style="width:40px; text-align:center;">Edit</div>
+            </div>
+            <!-- rows -->
+            <div>
+              <sc-for list="{{ rows }}" as="r" hint-placeholder-count="8">
+                <div onClick="{{ r.open }}" style="display:flex; align-items:center; min-height:{{ rowH }}px; border-bottom:1px solid #f4f4f4; font-size:14px; padding:0 16px; cursor:pointer;" style-hover="background:#f4f4f4;">
+                  <div style="flex:2.4; min-width:120px; display:flex; align-items:center; gap:10px;">
+                    <span style="width:8px; height:8px; flex:none; background:{{ r.color }};"></span>
+                    <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500;">{{ r.name }}</span>
+                  </div>
+                  <div style="flex:1.3; min-width:96px;">
+                    <span style="font-size:11px; padding:1px 8px; border-radius:12px; white-space:nowrap; background:{{ r.tagBg }}; color:{{ r.tagText }};">{{ r.catLabel }}</span>
+                  </div>
+                  <div style="flex:1; min-width:84px; text-align:right; font-family:'IBM Plex Mono', monospace;">{{ r.importo }}</div>
+                  <div style="flex:1.1; min-width:92px; padding-left:16px; color:#525252;">{{ r.recur }}</div>
+                  <div style="flex:1; min-width:80px; color:#525252;">{{ r.inizio }}</div>
+                  <div style="flex:1; min-width:80px; color:#525252;">{{ r.fine }}</div>
+                  <div style="flex:1.1; min-width:96px; text-align:right; color:#525252;">{{ r.prossimo }}</div>
+                  <div style="width:40px; display:flex; justify-content:center;">
+                    <button onClick="{{ r.edit }}" title="Modifica" style="width:32px; height:32px; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#525252;" style-hover="background:#e0e0e0; color:#161616;">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M3 11.5V13h1.5l6.4-6.4-1.5-1.5zM12.8 4.5a.7.7 0 0 0 0-1l-.8-.8a.7.7 0 0 0-1 0l-.8.8 1.5 1.5z"></path></svg>
+                    </button>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </section>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ============ SPESE (LIST) SCREEN ============ -->
+      <sc-if value="{{ isList }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Spese" style="max-width:1100px; margin:0 auto; padding:24px 32px 64px;">
+
+        <!-- page header -->
+        <div style="display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:16px; margin-bottom:24px;">
+          <div>
+            <div style="font-size:12px; letter-spacing:0.32px; color:#6f6f6f; text-transform:uppercase; margin-bottom:4px;">Spese</div>
+            <h1 style="margin:0; font-size:28px; font-weight:400; line-height:1.25;">Spese di {{ monthLabel }}</h1>
+          </div>
+          <div style="display:flex; align-items:stretch; gap:8px;">
+            <div style="display:flex; align-items:center; border:1px solid #e0e0e0; background:#fff; height:40px;">
+              <button onClick="{{ prevMonth }}" style="width:40px; height:40px; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#161616;" style-hover="background:#e8e8e8;">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M10 13L5 8l5-5 .7.7L6.4 8l4.3 4.3z"></path></svg>
+              </button>
+              <div style="min-width:128px; text-align:center; font-size:14px; font-weight:500;">{{ monthLabel }}</div>
+              <button onClick="{{ nextMonth }}" style="width:40px; height:40px; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#161616;" style-hover="background:#e8e8e8;">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5-.7-.7L9.6 8 5.3 3.7z"></path></svg>
+              </button>
+            </div>
+            <button onClick="{{ openAdd }}" style="height:40px; border:none; background:{{ accent }}; color:#fff; cursor:pointer; display:flex; align-items:center; gap:24px; padding:0 16px; font-size:14px;" style-hover="background:#0353e9;">
+              Aggiungi spesa
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8.5 3v4.5H13v1H8.5V13h-1V8.5H3v-1h4.5V3z"></path></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- summary strip -->
+        <div style="display:flex; flex-wrap:wrap; gap:1px; background:#e0e0e0; margin-bottom:16px;">
+          <div style="flex:2 1 320px; background:#fff; padding:20px 24px; min-width:280px;">
+            <div style="font-size:12px; color:#6f6f6f; margin-bottom:4px;">Totale di {{ monthShort }}</div>
+            <div style="font-size:42px; font-weight:300; line-height:1.1; letter-spacing:-0.01em;">{{ kpiTotal }}</div>
+            <div style="display:flex; align-items:center; gap:6px; margin-top:8px; font-size:13px; color:{{ deltaColor }};">
+              <span innerHTML="{{ deltaIcon }}"></span>
+              <span style="font-weight:500;">{{ deltaText }}</span>
+              <span style="color:#6f6f6f;">vs {{ prevMonthShort }}</span>
+            </div>
+          </div>
+          <div style="flex:1 1 180px; background:#fff; padding:20px 24px; min-width:160px;">
+            <div style="font-size:12px; color:#6f6f6f; margin-bottom:8px;">Spese del mese</div>
+            <div style="font-size:32px; font-weight:300; line-height:1;">{{ monthRowCount }}</div>
+            <div style="font-size:13px; color:#6f6f6f; margin-top:6px;">{{ activeCount }} pagamenti attivi</div>
+          </div>
+          <div style="flex:1 1 200px; background:#fff; padding:20px 24px; min-width:180px;">
+            <div style="font-size:12px; color:#6f6f6f; margin-bottom:8px;">Prossimo addebito</div>
+            <div style="font-size:16px; font-weight:600; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ nextName }}</div>
+            <div style="display:flex; align-items:baseline; gap:8px; margin-top:6px;">
+              <span style="font-size:13px; color:#6f6f6f;">{{ nextDate }}</span>
+              <span style="font-size:14px; font-weight:500;">{{ nextAmount }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- table -->
+        <section style="background:#fff; display:flex; flex-direction:column;">
+          <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; padding:16px 24px;">
+            <div style="font-size:16px; font-weight:600;">Dettaglio spese · {{ monthLabel }}</div>
+            <div style="font-size:12px; color:#6f6f6f;">{{ monthRowCount }} voci</div>
+          </div>
+          <!-- filter tabs -->
+          <div style="display:flex; gap:0; padding:0 16px; border-bottom:1px solid #e0e0e0; overflow-x:auto;">
+            <sc-for list="{{ filterTabs }}" as="t" hint-placeholder-count="5">
+              <button onClick="{{ t.click }}" style="height:40px; padding:0 12px; border:none; background:transparent; cursor:pointer; font-size:13px; white-space:nowrap; color:{{ t.color }}; font-weight:{{ t.weight }}; border-bottom:2px solid {{ t.bar }};">{{ t.label }}</button>
+            </sc-for>
+          </div>
+          <!-- header -->
+          <div style="display:flex; align-items:center; height:40px; background:#f4f4f4; border-bottom:1px solid #e0e0e0; font-size:12px; font-weight:600; color:#161616; padding:0 16px;">
+            <button onClick="{{ sortName }}" style="flex:2.4; min-width:120px; text-align:left; border:none; background:transparent; cursor:pointer; font:inherit; font-weight:600; display:flex; align-items:center; gap:4px; padding:0;">Nome <span innerHTML="{{ sortNameIcon }}"></span></button>
+            <div style="flex:1.3; min-width:96px;">Categoria</div>
+            <button onClick="{{ sortAmount }}" style="flex:1; min-width:84px; text-align:right; justify-content:flex-end; border:none; background:transparent; cursor:pointer; font:inherit; font-weight:600; display:flex; align-items:center; gap:4px; padding:0;">Importo <span innerHTML="{{ sortAmountIcon }}"></span></button>
+            <div style="flex:1.1; min-width:92px; text-align:left; padding-left:16px;">Ricorrenza</div>
+            <div style="flex:1; min-width:80px;">Metodo</div>
+            <button onClick="{{ sortNext }}" style="flex:1.1; min-width:96px; text-align:right; justify-content:flex-end; border:none; background:transparent; cursor:pointer; font:inherit; font-weight:600; display:flex; align-items:center; gap:4px; padding:0;">Prossimo <span innerHTML="{{ sortNextIcon }}"></span></button>
+            <div style="width:40px; text-align:center;">Edit</div>
+          </div>
+          <!-- rows -->
+          <div>
+            <sc-for list="{{ monthRows }}" as="r" hint-placeholder-count="6">
+              <div onClick="{{ r.open }}" style="display:flex; align-items:center; min-height:{{ rowH }}px; border-bottom:1px solid #f4f4f4; font-size:14px; padding:0 16px; cursor:pointer;" style-hover="background:#f4f4f4;">
+                <div style="flex:2.4; min-width:120px; display:flex; align-items:center; gap:10px;">
+                  <span style="width:8px; height:8px; flex:none; background:{{ r.color }};"></span>
+                  <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500;">{{ r.name }}</span>
+                </div>
+                <div style="flex:1.3; min-width:96px;">
+                  <span style="font-size:11px; padding:1px 8px; border-radius:12px; white-space:nowrap; background:{{ r.tagBg }}; color:{{ r.tagText }};">{{ r.catLabel }}</span>
+                </div>
+                <div style="flex:1; min-width:84px; text-align:right; font-family:'IBM Plex Mono', monospace;">{{ r.importo }}</div>
+                <div style="flex:1.1; min-width:92px; padding-left:16px; color:#525252;">{{ r.recur }}</div>
+                <div style="flex:1; min-width:80px; color:#525252; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ r.method }}</div>
+                <div style="flex:1.1; min-width:96px; text-align:right; color:#525252;">{{ r.prossimo }}</div>
+                <div style="width:40px; display:flex; justify-content:center;">
+                  <button onClick="{{ r.edit }}" title="Modifica" style="width:32px; height:32px; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#525252;" style-hover="background:#e0e0e0; color:#161616;">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M3 11.5V13h1.5l6.4-6.4-1.5-1.5zM12.8 4.5a.7.7 0 0 0 0-1l-.8-.8a.7.7 0 0 0-1 0l-.8.8 1.5 1.5z"></path></svg>
+                  </button>
+                </div>
+              </div>
+            </sc-for>
+            <sc-if value="{{ noMonthRows }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:48px 24px; text-align:center; color:#6f6f6f; font-size:14px;">Nessuna spesa addebitata in {{ monthLabel }}.</div>
+            </sc-if>
+          </div>
+        </section>
+      </div>
+      </sc-if>
+
+      <!-- ============ DETAIL SCREEN ============ -->
+      <sc-if value="{{ isDetail }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Dettaglio spesa" style="max-width:1000px; margin:0 auto; padding:20px 32px 64px;">
+        <button onClick="{{ goBack }}" style="display:flex; align-items:center; gap:6px; border:none; background:transparent; color:{{ accent }}; cursor:pointer; font-size:14px; padding:8px 0; margin-bottom:8px;">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M10 13L5 8l5-5 .7.7L6.4 8l4.3 4.3z"></path></svg> {{ backLabel }}
+        </button>
+
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:16px; margin-bottom:24px;">
+          <div style="display:flex; gap:16px; align-items:flex-start;">
+            <span style="width:14px; height:14px; margin-top:10px; flex:none; background:{{ dColor }};"></span>
+            <div>
+              <h1 style="margin:0; font-size:28px; font-weight:400; line-height:1.2;">{{ dName }}</h1>
+              <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
+                <span style="font-size:12px; padding:2px 10px; border-radius:12px; white-space:nowrap; background:{{ dTagBg }}; color:{{ dTagText }};">{{ dCatLabel }}</span>
+                <span style="font-size:12px; padding:2px 10px; border-radius:12px; white-space:nowrap; background:{{ dStatusBg }}; color:{{ dStatusText }};">{{ dStatus }}</span>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button onClick="{{ editCurrent }}" style="height:40px; padding:0 16px; border:1px solid #e0e0e0; background:#fff; cursor:pointer; display:flex; align-items:center; gap:8px; font-size:14px;" style-hover="background:#f4f4f4;">
+              Modifica <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M3 11.5V13h1.5l6.4-6.4-1.5-1.5zM12.8 4.5a.7.7 0 0 0 0-1l-.8-.8a.7.7 0 0 0-1 0l-.8.8 1.5 1.5z"></path></svg>
+            </button>
+            <button onClick="{{ deleteCurrent }}" style="height:40px; padding:0 16px; border:1px solid #e0e0e0; background:#fff; cursor:pointer; display:flex; align-items:center; gap:8px; font-size:14px; color:#da1e28;" style-hover="background:#fff1f1;">
+              Elimina <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M6 2h4v1h3v1h-1v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4H3V3h3zm-1 2v9h6V4zm2 2h1v5H7zm2 0h1v5H9z"></path></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- facts -->
+        <div style="display:flex; flex-wrap:wrap; gap:1px; background:#e0e0e0; margin-bottom:16px;">
+          <sc-for list="{{ facts }}" as="f" hint-placeholder-count="6">
+            <div style="flex:1 1 150px; background:#fff; padding:16px 20px; min-width:130px;">
+              <div style="font-size:12px; color:#6f6f6f; margin-bottom:6px;">{{ f.label }}</div>
+              <div style="font-size:18px; font-weight:500;">{{ f.value }}</div>
+              <div style="font-size:12px; color:#6f6f6f; margin-top:2px;">{{ f.sub }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display:flex; flex-wrap:wrap; gap:16px;">
+          <!-- progress (installments) -->
+          <sc-if value="{{ hasProgress }}" hint-placeholder-val="{{ false }}">
+          <section style="flex:1 1 320px; background:#fff; padding:20px 24px; min-width:280px;">
+            <div style="font-size:16px; font-weight:600; margin-bottom:4px;">Piano di rientro</div>
+            <div style="font-size:13px; color:#6f6f6f; margin-bottom:16px;">{{ rataLabel }}</div>
+            <div style="height:8px; background:#e0e0e0; margin-bottom:6px;">
+              <div style="height:8px; width:{{ progressPct }}%; background:{{ dColor }};"></div>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:12px; color:#6f6f6f; margin-bottom:20px;">
+              <span>{{ progressLabel }}</span><span>{{ progressPct }}%</span>
+            </div>
+            <div style="display:flex; gap:24px;">
+              <div><div style="font-size:12px; color:#6f6f6f;">Pagato finora</div><div style="font-size:20px; font-weight:500;">{{ paidSoFar }}</div></div>
+              <div><div style="font-size:12px; color:#6f6f6f;">Residuo</div><div style="font-size:20px; font-weight:500;">{{ remaining }}</div></div>
+            </div>
+          </section>
+          </sc-if>
+
+          <!-- year mini chart -->
+          <section style="flex:1 1 320px; background:#fff; padding:20px 24px; min-width:280px;">
+            <div style="font-size:16px; font-weight:600; margin-bottom:4px;">Questa spesa nel 2026</div>
+            <div style="font-size:13px; color:#6f6f6f; margin-bottom:20px;">{{ dYearTotal }} totali nell'anno</div>
+            <div style="display:flex; align-items:flex-end; gap:4px; height:90px;">
+              <sc-for list="{{ dBars }}" as="b" hint-placeholder-count="12">
+                <div style="flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; height:100%;">
+                  <div style="width:100%; max-width:18px; height:{{ b.h }}px; background:{{ b.color }};"></div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:flex; gap:4px; margin-top:6px;">
+              <sc-for list="{{ dBars }}" as="b" hint-placeholder-count="12">
+                <div style="flex:1; text-align:center; font-size:9px; color:#a8a8a8;">{{ b.label }}</div>
+              </sc-for>
+            </div>
+          </section>
+        </div>
+
+        <!-- timeline -->
+        <section style="background:#fff; margin-top:16px; padding:20px 0 8px;">
+          <div style="padding:0 24px 8px; font-size:16px; font-weight:600;">Storico pagamenti</div>
+          <sc-for list="{{ history }}" as="h" hint-placeholder-count="6">
+            <div style="display:flex; align-items:center; gap:16px; padding:12px 24px; border-top:1px solid #f4f4f4;">
+              <span style="width:24px; height:24px; flex:none; border-radius:50%; background:{{ h.dotBg }}; color:{{ h.dotColor }}; display:flex; align-items:center; justify-content:center;">
+                <span innerHTML="{{ h.icon }}"></span>
+              </span>
+              <div style="flex:1;">
+                <div style="font-size:14px; font-weight:500;">{{ h.dateStr }}</div>
+                <div style="font-size:12px; color:#6f6f6f;">{{ h.statusLabel }}</div>
+              </div>
+              <div style="font-size:14px; font-weight:500; font-family:'IBM Plex Mono', monospace; color:{{ h.amtColor }};">{{ h.amount }}</div>
+            </div>
+          </sc-for>
+        </section>
+      </div>
+      </sc-if>
+
+      <!-- ============ CATEGORIE SCREEN ============ -->
+      <sc-if value="{{ isCatg }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Categorie" style="max-width:900px; margin:0 auto; padding:24px 32px 64px;">
+
+        <!-- page header -->
+        <div style="display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:16px; margin-bottom:24px;">
+          <div>
+            <div style="font-size:12px; letter-spacing:0.32px; color:#6f6f6f; text-transform:uppercase; margin-bottom:4px;">Gestione</div>
+            <h1 style="margin:0; font-size:28px; font-weight:400; line-height:1.25;">Categorie e tipi di pagamento</h1>
+          </div>
+          <div style="display:flex; align-items:center; border:1px solid #e0e0e0; background:#fff; height:40px;">
+            <button onClick="{{ prevMonth }}" style="width:40px; height:40px; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#161616;" style-hover="background:#e8e8e8;">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M10 13L5 8l5-5 .7.7L6.4 8l4.3 4.3z"></path></svg>
+            </button>
+            <div style="min-width:128px; text-align:center; font-size:14px; font-weight:500;">{{ monthLabel }}</div>
+            <button onClick="{{ nextMonth }}" style="width:40px; height:40px; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#161616;" style-hover="background:#e8e8e8;">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M6 3l5 5-5 5-.7-.7L9.6 8 5.3 3.7z"></path></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- CATEGORIE -->
+        <section style="background:#fff; margin-bottom:16px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:16px 24px;">
+            <div style="display:flex; align-items:baseline; gap:10px;">
+              <div style="font-size:16px; font-weight:600;">Categorie</div>
+              <div style="font-size:12px; color:#6f6f6f;">{{ catCount }} categorie</div>
+            </div>
+            <button onClick="{{ openAddCat }}" style="height:32px; border:1px solid #e0e0e0; background:#fff; cursor:pointer; display:flex; align-items:center; gap:8px; padding:0 12px; font-size:13px;" style-hover="background:#f4f4f4;">
+              Aggiungi <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8.5 3v4.5H13v1H8.5V13h-1V8.5H3v-1h4.5V3z"></path></svg>
+            </button>
+          </div>
+          <sc-for list="{{ catManage }}" as="c" hint-placeholder-count="4">
+            <div style="display:flex; align-items:center; gap:14px; padding:14px 24px; border-top:1px solid #f4f4f4;">
+              <span style="width:14px; height:14px; flex:none; background:{{ c.color }};"></span>
+              <div style="flex:1; min-width:0;">
+                <div style="font-size:14px; font-weight:500;">{{ c.label }}</div>
+                <div style="font-size:12px; color:#6f6f6f;">{{ c.countLabel }}</div>
+              </div>
+              <div style="text-align:right; min-width:120px;">
+                <div style="font-size:14px; font-weight:500; font-family:'IBM Plex Mono', monospace;">{{ c.monthTot }}</div>
+                <div style="font-size:12px; color:#6f6f6f;">{{ c.annualLabel }}</div>
+              </div>
+              <div style="display:flex; gap:2px; flex:none;">
+                <button onClick="{{ c.onEdit }}" title="Modifica" style="width:32px; height:32px; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#525252;" style-hover="background:#e0e0e0; color:#161616;">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M3 11.5V13h1.5l6.4-6.4-1.5-1.5zM12.8 4.5a.7.7 0 0 0 0-1l-.8-.8a.7.7 0 0 0-1 0l-.8.8 1.5 1.5z"></path></svg>
+                </button>
+                <button onClick="{{ c.onDelete }}" disabled="{{ c.disableDel }}" title="{{ c.delTitle }}" style="width:32px; height:32px; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; color:{{ c.delColor }};" style-hover="background:#fff1f1;">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M6 2h4v1h3v1h-1v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4H3V3h3zm-1 2v9h6V4zm2 2h1v5H7zm2 0h1v5H9z"></path></svg>
+                </button>
+              </div>
+            </div>
+          </sc-for>
+        </section>
+
+        <!-- METODI DI PAGAMENTO -->
+        <section style="background:#fff;">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:16px 24px;">
+            <div style="display:flex; align-items:baseline; gap:10px;">
+              <div style="font-size:16px; font-weight:600;">Tipi di pagamento</div>
+              <div style="font-size:12px; color:#6f6f6f;">{{ payCount }} metodi</div>
+            </div>
+            <button onClick="{{ openAddPay }}" style="height:32px; border:1px solid #e0e0e0; background:#fff; cursor:pointer; display:flex; align-items:center; gap:8px; padding:0 12px; font-size:13px;" style-hover="background:#f4f4f4;">
+              Aggiungi <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8.5 3v4.5H13v1H8.5V13h-1V8.5H3v-1h4.5V3z"></path></svg>
+            </button>
+          </div>
+          <sc-for list="{{ payManage }}" as="p" hint-placeholder-count="4">
+            <div style="display:flex; align-items:center; gap:14px; padding:14px 24px; border-top:1px solid #f4f4f4;">
+              <span style="width:32px; height:32px; flex:none; border-radius:50%; background:#f4f4f4; color:#525252; display:flex; align-items:center; justify-content:center;" innerHTML="{{ p.icon }}"></span>
+              <div style="flex:1; min-width:0;">
+                <div style="font-size:14px; font-weight:500;">{{ p.label }}</div>
+                <div style="font-size:12px; color:#6f6f6f;">{{ p.countLabel }}</div>
+              </div>
+              <div style="font-size:14px; font-weight:500; font-family:'IBM Plex Mono', monospace; min-width:96px; text-align:right;">{{ p.monthTot }}</div>
+              <div style="display:flex; gap:2px; flex:none;">
+                <button onClick="{{ p.onEdit }}" title="Modifica" style="width:32px; height:32px; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#525252;" style-hover="background:#e0e0e0; color:#161616;">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M3 11.5V13h1.5l6.4-6.4-1.5-1.5zM12.8 4.5a.7.7 0 0 0 0-1l-.8-.8a.7.7 0 0 0-1 0l-.8.8 1.5 1.5z"></path></svg>
+                </button>
+                <button onClick="{{ p.onDelete }}" disabled="{{ p.disableDel }}" title="{{ p.delTitle }}" style="width:32px; height:32px; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; color:{{ p.delColor }};" style-hover="background:#fff1f1;">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M6 2h4v1h3v1h-1v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4H3V3h3zm-1 2v9h6V4zm2 2h1v5H7zm2 0h1v5H9z"></path></svg>
+                </button>
+              </div>
+            </div>
+          </sc-for>
+          <div style="padding:14px 24px; border-top:1px solid #f4f4f4;">
+            <div style="font-size:12px; color:#a8a8a8;">I tipi di pagamento disponibili nella maschera di inserimento spesa.</div>
+          </div>
+        </section>
+      </div>
+      </sc-if>
+
+    </main>
+  </div>
+
+  <!-- ============ MODAL ============ -->
+  <sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed; inset:0; background:rgba(22,22,22,0.6); display:flex; align-items:center; justify-content:center; z-index:50; animation:cadFade .12s ease;" onClick="{{ closeModal }}">
+    <div onClick="{{ stop }}" style="width:560px; max-width:calc(100vw - 32px); max-height:calc(100vh - 64px); background:#fff; display:flex; flex-direction:column; animation:cadSlideUp .16s ease;">
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; padding:20px 24px 8px;">
+        <div>
+          <div style="font-size:12px; color:#6f6f6f;">{{ modalKicker }}</div>
+          <h2 style="margin:4px 0 0; font-size:20px; font-weight:400;">{{ modalTitle }}</h2>
+        </div>
+        <button onClick="{{ closeModal }}" style="width:40px; height:40px; border:none; background:transparent; cursor:pointer; color:#161616; display:flex; align-items:center; justify-content:center;" style-hover="background:#f4f4f4;">
+          <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M12 4.7l-.7-.7L8 7.3 4.7 4l-.7.7L7.3 8 4 11.3l.7.7L8 8.7l3.3 3.3.7-.7L8.7 8z"></path></svg>
+        </button>
+      </div>
+
+      <div style="padding:8px 24px 24px; overflow:auto;">
+        <label style="display:block; margin-bottom:16px;">
+          <span style="display:block; font-size:12px; color:#525252; margin-bottom:6px;">Nome della spesa</span>
+          <input value="{{ form.name }}" onChange="{{ onName }}" placeholder="es. Netflix, Mutuo casa…" style="width:100%; height:40px; border:none; border-bottom:1px solid #8d8d8d; background:#f4f4f4; padding:0 12px; font-size:14px; color:#161616;">
+        </label>
+
+        <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:16px;">
+          <label style="flex:1 1 180px;">
+            <span style="display:block; font-size:12px; color:#525252; margin-bottom:6px;">Categoria</span>
+            <select value="{{ form.cat }}" onChange="{{ onCat }}" style="width:100%; height:40px; border:none; border-bottom:1px solid #8d8d8d; background:#f4f4f4; padding:0 12px; font-size:14px; color:#161616;">
+              <sc-for list="{{ catOptions }}" as="o" hint-placeholder-count="4">
+                <option value="{{ o.value }}">{{ o.label }}</option>
+              </sc-for>
+            </select>
+          </label>
+          <label style="flex:1 1 140px;">
+            <span style="display:block; font-size:12px; color:#525252; margin-bottom:6px;">Importo (€)</span>
+            <input value="{{ form.amount }}" onChange="{{ onAmount }}" inputmode="decimal" placeholder="0,00" style="width:100%; height:40px; border:none; border-bottom:1px solid #8d8d8d; background:#f4f4f4; padding:0 12px; font-size:14px; color:#161616; font-family:'IBM Plex Mono', monospace;">
+          </label>
+        </div>
+
+        <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:16px;">
+          <label style="flex:1 1 180px;">
+            <span style="display:block; font-size:12px; color:#525252; margin-bottom:6px;">Ricorrenza</span>
+            <select value="{{ form.interval }}" onChange="{{ onInterval }}" style="width:100%; height:40px; border:none; border-bottom:1px solid #8d8d8d; background:#f4f4f4; padding:0 12px; font-size:14px; color:#161616;">
+              <option value="1">Mensile</option>
+              <option value="2">Bimestrale</option>
+              <option value="3">Trimestrale</option>
+              <option value="6">Semestrale</option>
+              <option value="12">Annuale</option>
+            </select>
+          </label>
+          <label style="flex:1 1 140px;">
+            <span style="display:block; font-size:12px; color:#525252; margin-bottom:6px;">Metodo di pagamento</span>
+            <select value="{{ form.method }}" onChange="{{ onMethod }}" style="width:100%; height:40px; border:none; border-bottom:1px solid #8d8d8d; background:#f4f4f4; padding:0 12px; font-size:14px; color:#161616;">
+              <sc-for list="{{ methodOptions }}" as="o" hint-placeholder-count="4">
+                <option value="{{ o.value }}">{{ o.label }}</option>
+              </sc-for>
+            </select>
+          </label>
+        </div>
+
+        <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:8px;">
+          <label style="flex:1 1 180px;">
+            <span style="display:block; font-size:12px; color:#525252; margin-bottom:6px;">Data di inizio</span>
+            <input type="date" value="{{ form.start }}" onChange="{{ onStart }}" style="width:100%; height:40px; border:none; border-bottom:1px solid #8d8d8d; background:#f4f4f4; padding:0 12px; font-size:14px; color:#161616;">
+          </label>
+          <label style="flex:1 1 180px;">
+            <span style="display:block; font-size:12px; color:#525252; margin-bottom:6px;">Data di fine</span>
+            <input type="date" value="{{ form.end }}" onChange="{{ onEnd }}" disabled="{{ form.hasEnd }}" style="width:100%; height:40px; border:none; border-bottom:1px solid #8d8d8d; background:{{ endBg }}; padding:0 12px; font-size:14px; color:#161616;">
+          </label>
+        </div>
+
+        <label style="display:flex; align-items:center; gap:10px; cursor:pointer; padding:8px 0 4px;">
+          <span onClick="{{ toggleHasEnd }}" style="width:32px; height:16px; border-radius:8px; background:{{ toggleBg }}; position:relative; transition:background .15s; flex:none;">
+            <span style="position:absolute; top:2px; left:{{ toggleX }}px; width:12px; height:12px; border-radius:50%; background:#fff; transition:left .15s;"></span>
+          </span>
+          <span style="font-size:13px; color:#525252;">Senza data di fine (pagamento continuativo)</span>
+        </label>
+
+        <label style="display:block; margin-top:16px;">
+          <span style="display:block; font-size:12px; color:#525252; margin-bottom:6px;">Note (facoltative)</span>
+          <textarea value="{{ form.note }}" onChange="{{ onNote }}" rows="2" placeholder="Aggiungi un dettaglio…" style="width:100%; border:none; border-bottom:1px solid #8d8d8d; background:#f4f4f4; padding:8px 12px; font-size:14px; color:#161616; resize:vertical;"></textarea>
+        </label>
+      </div>
+
+      <div style="display:flex; flex:none;">
+        <button onClick="{{ closeModal }}" style="flex:1; height:64px; border:none; background:#fff; color:#161616; cursor:pointer; font-size:14px; text-align:left; padding:0 16px;" style-hover="background:#e8e8e8;">Annulla</button>
+        <button onClick="{{ saveExpense }}" style="flex:1; height:64px; border:none; background:{{ accent }}; color:#fff; cursor:pointer; font-size:14px; text-align:left; padding:0 16px;" style-hover="background:#0353e9;">{{ saveLabel }}</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ============ CATEGORY EDITOR MODAL ============ -->
+  <sc-if value="{{ catEditorOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed; inset:0; background:rgba(22,22,22,0.6); display:flex; align-items:center; justify-content:center; z-index:60; animation:cadFade .12s ease;" onClick="{{ closeCatEditor }}">
+    <div onClick="{{ stop }}" style="width:460px; max-width:calc(100vw - 32px); background:#fff; display:flex; flex-direction:column; animation:cadSlideUp .16s ease;">
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; padding:20px 24px 8px;">
+        <div>
+          <div style="font-size:12px; color:#6f6f6f;">{{ catEditorKicker }}</div>
+          <h2 style="margin:4px 0 0; font-size:20px; font-weight:400;">{{ catEditorTitle }}</h2>
+        </div>
+        <button onClick="{{ closeCatEditor }}" style="width:40px; height:40px; border:none; background:transparent; cursor:pointer; color:#161616; display:flex; align-items:center; justify-content:center;" style-hover="background:#f4f4f4;">
+          <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M12 4.7l-.7-.7L8 7.3 4.7 4l-.7.7L7.3 8 4 11.3l.7.7L8 8.7l3.3 3.3.7-.7L8.7 8z"></path></svg>
+        </button>
+      </div>
+      <div style="padding:8px 24px 24px;">
+        <label style="display:block; margin-bottom:20px;">
+          <span style="display:block; font-size:12px; color:#525252; margin-bottom:6px;">Nome categoria</span>
+          <input value="{{ catEditorLabel }}" onChange="{{ setCatLabel }}" placeholder="es. Trasporti, Salute…" style="width:100%; height:40px; border:none; border-bottom:1px solid #8d8d8d; background:#f4f4f4; padding:0 12px; font-size:14px; color:#161616;">
+        </label>
+        <div style="font-size:12px; color:#525252; margin-bottom:10px;">Colore</div>
+        <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px;">
+          <sc-for list="{{ catSwatches }}" as="sw" hint-placeholder-count="8">
+            <button onClick="{{ sw.pick }}" style="width:30px; height:30px; border:2px solid {{ sw.ring }}; background:{{ sw.color }}; cursor:pointer; padding:0; border-radius:50%;"></button>
+          </sc-for>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:12px; color:#525252;">Anteprima</span>
+          <span style="font-size:12px; padding:2px 10px; border-radius:12px; background:{{ catEditorTagBg }}; color:{{ catEditorTagText }};">{{ catEditorLabel }}</span>
+        </div>
+      </div>
+      <div style="display:flex; flex:none;">
+        <button onClick="{{ closeCatEditor }}" style="flex:1; height:64px; border:none; background:#fff; color:#161616; cursor:pointer; font-size:14px; text-align:left; padding:0 16px;" style-hover="background:#e8e8e8;">Annulla</button>
+        <button onClick="{{ saveCat }}" style="flex:1; height:64px; border:none; background:{{ accent }}; color:#fff; cursor:pointer; font-size:14px; text-align:left; padding:0 16px;" style-hover="background:#0353e9;">Salva</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ============ PAYMENT TYPE EDITOR MODAL ============ -->
+  <sc-if value="{{ payEditorOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed; inset:0; background:rgba(22,22,22,0.6); display:flex; align-items:center; justify-content:center; z-index:60; animation:cadFade .12s ease;" onClick="{{ closePayEditor }}">
+    <div onClick="{{ stop }}" style="width:460px; max-width:calc(100vw - 32px); background:#fff; display:flex; flex-direction:column; animation:cadSlideUp .16s ease;">
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; padding:20px 24px 8px;">
+        <div>
+          <div style="font-size:12px; color:#6f6f6f;">{{ payEditorKicker }}</div>
+          <h2 style="margin:4px 0 0; font-size:20px; font-weight:400;">{{ payEditorTitle }}</h2>
+        </div>
+        <button onClick="{{ closePayEditor }}" style="width:40px; height:40px; border:none; background:transparent; cursor:pointer; color:#161616; display:flex; align-items:center; justify-content:center;" style-hover="background:#f4f4f4;">
+          <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M12 4.7l-.7-.7L8 7.3 4.7 4l-.7.7L7.3 8 4 11.3l.7.7L8 8.7l3.3 3.3.7-.7L8.7 8z"></path></svg>
+        </button>
+      </div>
+      <div style="padding:8px 24px 24px;">
+        <label style="display:block;">
+          <span style="display:block; font-size:12px; color:#525252; margin-bottom:6px;">Nome tipo di pagamento</span>
+          <input value="{{ payEditorLabel }}" onChange="{{ setPayLabel }}" placeholder="es. Carta •• 1234, Satispay…" style="width:100%; height:40px; border:none; border-bottom:1px solid #8d8d8d; background:#f4f4f4; padding:0 12px; font-size:14px; color:#161616;">
+        </label>
+      </div>
+      <div style="display:flex; flex:none;">
+        <button onClick="{{ closePayEditor }}" style="flex:1; height:64px; border:none; background:#fff; color:#161616; cursor:pointer; font-size:14px; text-align:left; padding:0 16px;" style-hover="background:#e8e8e8;">Annulla</button>
+        <button onClick="{{ savePay }}" style="flex:1; height:64px; border:none; background:{{ accent }}; color:#fff; cursor:pointer; font-size:14px; text-align:left; padding:0 16px;" style-hover="background:#0353e9;">Salva</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;density&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Comoda&quot;,&quot;Compatta&quot;],&quot;default&quot;:&quot;Comoda&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#0f62fe&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = {
+    screen: 'overview',
+    monthIndex: 5,
+    selectedId: 'mutuo',
+    backTo: 'overview',
+    modalOpen: false,
+    modalMode: 'add',
+    trendMode: 'total',
+    filter: 'all',
+    sortKey: 'next',
+    sortDir: 'asc',
+    navOpen: true,
+    hoverBar: -1,
+    form: { name:'', cat:'bollette', amount:'', interval:'1', start:'2026-06-01', hasEnd:false, end:'', method:'Addebito SEPA', note:'' },
+    categories: this.defaultCats(),
+    methods: this.defaultMethods(),
+    catEditor: { open:false, mode:'add', key:null, label:'', color:'#0f62fe', tagBg:'#d0e2ff', tagText:'#0043ce' },
+    payEditor: { open:false, mode:'add', index:-1, label:'' },
+    expenses: this.seed(),
+  };
+
+  // ---------- constants ----------
+  YEAR() { return 2026; }
+  TODAY() { return new Date(2026, 5, 19); }
+  todayYM() { return 2026 * 12 + 5; }
+  MONTHS() { return ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre']; }
+  MONTHS_SHORT() { return ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic']; }
+  RECUR() { return {1:'Mensile',2:'Bimestrale',3:'Trimestrale',6:'Semestrale',12:'Annuale'}; }
+  defaultCats() { return [
+    {key:'bollette',label:'Bollette',color:'#0f62fe',tagBg:'#d0e2ff',tagText:'#0043ce'},
+    {key:'abbonamenti',label:'Abbonamenti',color:'#8a3ffc',tagBg:'#e8daff',tagText:'#6929c4'},
+    {key:'rate',label:'Rate & prestiti',color:'#007d79',tagBg:'#9ef0f0',tagText:'#005d5d'},
+    {key:'assicurazioni',label:'Assicurazioni',color:'#198038',tagBg:'#a7f0ba',tagText:'#0e6027'},
+  ]; }
+  defaultMethods() { return ['Addebito SEPA','Carta •• 4421','PayPal','Bonifico']; }
+  catPalette() { return [
+    {color:'#0f62fe',tagBg:'#d0e2ff',tagText:'#0043ce'},
+    {color:'#8a3ffc',tagBg:'#e8daff',tagText:'#6929c4'},
+    {color:'#007d79',tagBg:'#9ef0f0',tagText:'#005d5d'},
+    {color:'#198038',tagBg:'#a7f0ba',tagText:'#0e6027'},
+    {color:'#da1e28',tagBg:'#ffd7d9',tagText:'#a2191f'},
+    {color:'#ff832b',tagBg:'#ffe2cc',tagText:'#8a3800'},
+    {color:'#d02670',tagBg:'#ffd6e8',tagText:'#9f1853'},
+    {color:'#1192e8',tagBg:'#c6e6ff',tagText:'#00539a'},
+  ]; }
+  cats() { const m={}; (this.state.categories||[]).forEach(c=>{ m[c.key]=c; }); return m; }
+
+  seed() { return [
+    {id:'fastweb',name:'Fastweb Internet',cat:'bollette',amount:29.95,interval:1,start:[2022,5],end:null,day:1,method:'Addebito SEPA',note:'Fibra 1 Gbit casa'},
+    {id:'iliad',name:'Iliad Mobile',cat:'bollette',amount:9.99,interval:1,start:[2021,2],end:null,day:5,method:'Carta •• 4421',note:''},
+    {id:'enel',name:'Enel Energia · Luce',cat:'bollette',amount:78.40,interval:2,start:[2023,0],end:null,day:15,method:'Addebito SEPA',note:'Bolletta bimestrale luce'},
+    {id:'eni',name:'Eni Plenitude · Gas',cat:'bollette',amount:54.90,interval:2,start:[2023,1],end:null,day:8,method:'Addebito SEPA',note:''},
+    {id:'acqua',name:'Acquedotto Pugliese',cat:'bollette',amount:31.20,interval:3,start:[2024,0],end:null,day:20,method:'Addebito SEPA',note:''},
+    {id:'netflix',name:'Netflix Premium',cat:'abbonamenti',amount:17.99,interval:1,start:[2021,8],end:null,day:3,method:'Carta •• 4421',note:'Piano 4K · 4 schermi'},
+    {id:'spotify',name:'Spotify Family',cat:'abbonamenti',amount:17.99,interval:1,start:[2020,2],end:null,day:12,method:'Carta •• 4421',note:''},
+    {id:'icloud',name:'iCloud+ 200 GB',cat:'abbonamenti',amount:2.99,interval:1,start:[2022,0],end:null,day:2,method:'Carta •• 4421',note:''},
+    {id:'adobe',name:'Adobe Creative Cloud',cat:'abbonamenti',amount:24.39,interval:1,start:[2024,3],end:null,day:18,method:'PayPal',note:'Piano fotografia'},
+    {id:'palestra',name:'Palestra McFit',cat:'abbonamenti',amount:29.90,interval:1,start:[2025,9],end:[2026,8],day:1,method:'Carta •• 4421',note:'Abbonamento 12 mesi'},
+    {id:'prime',name:'Amazon Prime',cat:'abbonamenti',amount:49.90,interval:12,start:[2020,10],end:null,day:14,method:'Carta •• 4421',note:'Rinnovo annuale'},
+    {id:'mutuo',name:'Mutuo casa',cat:'rate',amount:642.00,interval:1,start:[2019,3],end:[2049,3],day:1,method:'Addebito SEPA',note:'Tasso fisso · Intesa Sanpaolo'},
+    {id:'auto',name:'Prestito auto',cat:'rate',amount:289.50,interval:1,start:[2024,1],end:[2027,1],day:10,method:'Addebito SEPA',note:'Finanziamento 36 mesi'},
+    {id:'iphone',name:'Finanziamento iPhone',cat:'rate',amount:54.08,interval:1,start:[2025,9],end:[2027,8],day:28,method:'Carta •• 4421',note:'24 rate tasso zero'},
+    {id:'rcauto',name:'RC Auto',cat:'assicurazioni',amount:512.00,interval:12,start:[2022,4],end:null,day:22,method:'Bonifico',note:'Polizza annuale'},
+    {id:'casa',name:'Assicurazione casa',cat:'assicurazioni',amount:198.00,interval:12,start:[2021,2],end:null,day:7,method:'Bonifico',note:''},
+    {id:'vita',name:'Assicurazione vita',cat:'assicurazioni',amount:43.00,interval:1,start:[2023,0],end:null,day:5,method:'Addebito SEPA',note:''},
+  ]; }
+
+  // ---------- helpers ----------
+  sYM(e) { return e.start[0]*12 + e.start[1]; }
+  eYM(e) { return e.end ? e.end[0]*12 + e.end[1] : null; }
+  charges(e, ym) { const s=this.sYM(e), en=this.eYM(e); return ym>=s && (en==null||ym<=en) && ((ym-s)%e.interval===0); }
+  chargeDate(e, ym) { const y=Math.floor(ym/12), m=ym%12; const dim=new Date(y,m+1,0).getDate(); return new Date(y, m, Math.min(e.day,dim)); }
+  fmt(n) { return '€\u00a0' + (Math.round(n*100)/100).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  fmt0(n) { return '€\u00a0' + Math.round(n).toLocaleString('it-IT'); }
+  shortDate(d) { return d.getDate() + '\u00a0' + this.MONTHS_SHORT()[d.getMonth()]; }
+  monYear(e) { return this.MONTHS_SHORT()[e.start[1]] + ' ' + e.start[0]; }
+  endLabel(e) { return e.end ? (this.MONTHS_SHORT()[e.end[1]] + ' ' + e.end[0]) : '—'; }
+
+  totalForYM(ym, list) { let t=0; list.forEach(e=>{ if(this.charges(e,ym)) t+=e.amount; }); return t; }
+  catTotalForYM(cat, ym, list) { let t=0; list.forEach(e=>{ if(e.cat===cat && this.charges(e,ym)) t+=e.amount; }); return t; }
+
+  nextChargeOf(e) {
+    const today=this.TODAY();
+    for(let k=0;k<60;k++){ const ym=this.todayYM()+k; if(this.charges(e,ym)){ const d=this.chargeDate(e,ym); if(d>=today) return d; } }
+    return null;
+  }
+  chargesTotal(e) { const s=this.sYM(e), en=this.eYM(e); if(en==null) return null; return Math.floor((en-s)/e.interval)+1; }
+  chargesDone(e) {
+    const today=this.TODAY(); const s=this.sYM(e), en=this.eYM(e); let c=0;
+    const last = en!=null ? en : this.todayYM();
+    for(let ym=s; ym<=Math.max(last,this.todayYM()); ym++){ if(this.charges(e,ym)){ const d=this.chargeDate(e,ym); if(d<=today) c++; } }
+    return c;
+  }
+
+  // ---------- actions ----------
+  toggleNav = () => this.setState(s=>({navOpen:!s.navOpen}));
+  prevMonth = () => this.setState(s=>({monthIndex: Math.max(0, s.monthIndex-1)}));
+  nextMonth = () => this.setState(s=>({monthIndex: Math.min(11, s.monthIndex+1)}));
+  setTrendTotal = () => this.setState({trendMode:'total'});
+  setTrendCat = () => this.setState({trendMode:'category'});
+  setHover = (i) => this.setState({hoverBar:i});
+  clearHover = () => this.setState({hoverBar:-1});
+  goOverview = () => this.setState({screen:'overview'});
+  goList = () => this.setState({screen:'list'});
+  goCatg = () => this.setState({screen:'catg'});
+  goBack = () => this.setState(s=>({screen: s.backTo || 'overview'}));
+  stop = (e) => { e.stopPropagation(); };
+  closeModal = () => this.setState({modalOpen:false});
+  openAdd = () => this.setState({modalOpen:true, modalMode:'add', form:{ name:'', cat:'bollette', amount:'', interval:'1', start:'2026-06-01', hasEnd:false, end:'', method:'Addebito SEPA', note:'' }});
+  openEditFor = (e) => {
+    const pad=(n)=>String(n).padStart(2,'0');
+    this.setState({modalOpen:true, modalMode:'edit', selectedId:e.id, form:{
+      name:e.name, cat:e.cat, amount:String(e.amount).replace('.',','), interval:String(e.interval),
+      start: e.start[0]+'-'+pad(e.start[1]+1)+'-'+pad(e.day), hasEnd: e.end==null,
+      end: e.end ? (e.end[0]+'-'+pad(e.end[1]+1)+'-01') : '', method:e.method, note:e.note||'' }});
+  };
+  editCurrent = () => { const e=this.state.expenses.find(x=>x.id===this.state.selectedId); if(e) this.openEditFor(e); };
+  editRow = (id) => (ev) => { if(ev) ev.stopPropagation(); const e=this.state.expenses.find(x=>x.id===id); if(e) this.openEditFor(e); };
+  deleteCurrent = () => this.setState(s=>({ expenses: s.expenses.filter(x=>x.id!==s.selectedId), screen: s.backTo || 'overview' }));
+  openRow = (id) => () => this.setState(s=>({screen:'detail', selectedId:id, backTo: s.screen==='list'?'list':'overview'}));
+  setFilter = (k) => () => this.setState({filter:k});
+  setSort = (k) => () => this.setState(s=>({ sortKey:k, sortDir: s.sortKey===k && s.sortDir==='asc' ? 'desc':'asc' }));
+  onName = (e) => this.setForm('name', e.target.value);
+  onCat = (e) => this.setForm('cat', e.target.value);
+  onAmount = (e) => this.setForm('amount', e.target.value);
+  onInterval = (e) => this.setForm('interval', e.target.value);
+  onMethod = (e) => this.setForm('method', e.target.value);
+  onStart = (e) => this.setForm('start', e.target.value);
+  onEnd = (e) => this.setForm('end', e.target.value);
+  onNote = (e) => this.setForm('note', e.target.value);
+  toggleHasEnd = () => this.setState(s=>({form:{...s.form, hasEnd:!s.form.hasEnd}}));
+  setForm(k,v){ this.setState(s=>({form:{...s.form,[k]:v}})); }
+
+  openAddCat = () => { const p=this.catPalette()[0]; this.setState({catEditor:{open:true,mode:'add',key:null,label:'',color:p.color,tagBg:p.tagBg,tagText:p.tagText}}); };
+  openEditCat = (key) => (ev) => { if(ev) ev.stopPropagation(); const c=(this.state.categories||[]).find(x=>x.key===key); if(!c) return; this.setState({catEditor:{open:true,mode:'edit',key:c.key,label:c.label,color:c.color,tagBg:c.tagBg,tagText:c.tagText}}); };
+  closeCatEditor = () => this.setState(s=>({catEditor:{...s.catEditor,open:false}}));
+  setCatLabel = (e) => { const v=e.target.value; this.setState(s=>({catEditor:{...s.catEditor,label:v}})); };
+  pickCatColor = (p) => () => this.setState(s=>({catEditor:{...s.catEditor,color:p.color,tagBg:p.tagBg,tagText:p.tagText}}));
+  saveCat = () => this.setState(s=>{
+    const ed=s.catEditor; const label=(ed.label||'').trim()||'Nuova categoria';
+    let cats=s.categories.slice();
+    if(ed.mode==='edit'){ cats=cats.map(c=>c.key===ed.key?{...c,label,color:ed.color,tagBg:ed.tagBg,tagText:ed.tagText}:c); }
+    else { const key='c'+Date.now(); cats.push({key,label,color:ed.color,tagBg:ed.tagBg,tagText:ed.tagText}); }
+    return {categories:cats, catEditor:{...ed,open:false}};
+  });
+  deleteCat = (key) => (ev) => { if(ev) ev.stopPropagation(); this.setState(s=>{
+    if(s.expenses.some(e=>e.cat===key)) return {};
+    return {categories:s.categories.filter(c=>c.key!==key)};
+  }); };
+
+  openAddPay = () => this.setState({payEditor:{open:true,mode:'add',index:-1,label:''}});
+  openEditPay = (index) => (ev) => { if(ev) ev.stopPropagation(); const m=(this.state.methods||[])[index]; if(m==null) return; this.setState({payEditor:{open:true,mode:'edit',index,label:m}}); };
+  closePayEditor = () => this.setState(s=>({payEditor:{...s.payEditor,open:false}}));
+  setPayLabel = (e) => { const v=e.target.value; this.setState(s=>({payEditor:{...s.payEditor,label:v}})); };
+  savePay = () => this.setState(s=>{
+    const ed=s.payEditor; const label=(ed.label||'').trim(); if(!label) return {payEditor:{...ed,open:false}};
+    let methods=s.methods.slice(); let expenses=s.expenses;
+    if(ed.mode==='edit'){ const old=methods[ed.index]; methods[ed.index]=label; if(old&&old!==label) expenses=s.expenses.map(e=>e.method===old?{...e,method:label}:e); }
+    else { if(methods.indexOf(label)<0) methods.push(label); }
+    return {methods, expenses, payEditor:{...ed,open:false}};
+  });
+  deletePay = (index) => (ev) => { if(ev) ev.stopPropagation(); this.setState(s=>{
+    const m=s.methods[index]; if(s.expenses.some(e=>e.method===m)) return {};
+    return {methods:s.methods.filter((x,i)=>i!==index)};
+  }); };
+
+  saveExpense = () => {
+    const f=this.state.form;
+    const amt=parseFloat(String(f.amount).replace(/\./g,'').replace(',','.'))||0;
+    const sd=(f.start||'2026-06-01').split('-').map(Number);
+    let end=null;
+    if(!f.hasEnd && f.end){ const ed=f.end.split('-').map(Number); end=[ed[0], ed[1]-1]; }
+    const exp={ id: this.state.modalMode==='edit'?this.state.selectedId:('x'+Date.now()),
+      name:f.name||'Nuova spesa', cat:f.cat, amount:amt, interval:parseInt(f.interval,10)||1,
+      start:[sd[0], (sd[1]||1)-1], end, day:sd[2]||1, method:f.method, note:f.note };
+    this.setState(s=>{
+      let list;
+      if(s.modalMode==='edit') list=s.expenses.map(x=>x.id===exp.id?exp:x);
+      else list=[...s.expenses, exp];
+      return { expenses:list, modalOpen:false };
+    });
+  };
+
+  // ---------- render ----------
+  renderVals() {
+    const C=this.cats(), list=this.state.expenses||[], mi=this.state.monthIndex;
+    const catOf=(k)=>C[k]||{label:'—',color:'#8d8d8d',tagBg:'#e0e0e0',tagText:'#525252'};
+    const accent = this.props.accent || '#0f62fe';
+    const dense = (this.props.density||'Comoda')==='Compatta';
+    const Y=this.YEAR();
+    const selYM = Y*12+mi;
+    const ms=this.MONTHS_SHORT(), MN=this.MONTHS();
+
+    // KPIs
+    const monthTotal=this.totalForYM(selYM,list);
+    const prevYM = selYM-1;
+    const prevTotal=this.totalForYM(prevYM,list);
+    const delta = monthTotal-prevTotal;
+    const deltaPct = prevTotal>0 ? Math.round(delta/prevTotal*100) : 0;
+    const up = delta>0;
+    const arrowUp='<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 3l4 4-.7.7L8.5 4.9V13h-1V4.9L4.7 7.7 4 7z"></path></svg>';
+    const arrowDn='<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 13L4 9l.7-.7L7.5 11.1V3h1v8.1l2.8-2.8.7.7z"></path></svg>';
+
+    const activeCount=list.filter(e=> selYM>=this.sYM(e) && (this.eYM(e)==null||selYM<=this.eYM(e))).length;
+    const chargingCount=list.filter(e=>this.charges(e,selYM)).length;
+
+    // next charge overall
+    let nx=null;
+    list.forEach(e=>{ const d=this.nextChargeOf(e); if(d && (!nx||d<nx.d)) nx={d, e}; });
+
+    // year series
+    let yearTotal=0; const totals=[];
+    for(let i=0;i<12;i++){ const t=this.totalForYM(Y*12+i,list); totals.push(t); yearTotal+=t; }
+    const avg=yearTotal/12;
+    const maxTot=Math.max.apply(null, totals.concat([1]));
+    const H=200;
+    const trendMode=this.state.trendMode;
+    const catKeys=(this.state.categories||[]).map(c=>c.key);
+
+    const bars=totals.map((t,i)=>({
+      label:ms[i], total:t,
+      labelColor: i===mi?'#161616':'#8d8d8d', labelWeight: i===mi?600:400,
+      enter:()=>this.setHover(i), click:()=>this.setState({monthIndex:i}) }));
+
+    // line chart geometry
+    const xOf=(i)=>((i+0.5)/12*100);
+    let lines, dots=[];
+    if(trendMode==='category'){
+      lines=catKeys.map(k=>{
+        const pts=totals.map((t,i)=>{
+          const v=this.catTotalForYM(k,Y*12+i,list);
+          return xOf(i).toFixed(2)+','+(100 - v/maxTot*100).toFixed(2);
+        }).join(' ');
+        return {color:C[k].color, points:pts};
+      });
+    } else {
+      const pts=totals.map((t,i)=> xOf(i).toFixed(2)+','+(100 - t/maxTot*100).toFixed(2)).join(' ');
+      lines=[{color:accent, points:pts}];
+      dots=totals.map((t,i)=>({ left:xOf(i).toFixed(2), bottom:(t/maxTot*H).toFixed(1), color: i===mi?accent:'#a6c8ff' }));
+    }
+    const gridLines=[1,0.75,0.5,0.25,0].map(f=>({label:this.fmt0(maxTot*f)}));
+
+    // hover
+    const hb=this.state.hoverBar;
+    const hoverActive=hb>=0;
+    const hoverLeft = hb>=0 ? ((hb+0.5)/12*100) : 0;
+    const hoverBottom = hb>=0 ? Math.min(H-8, (totals[hb]/maxTot*H)+44) : 0;
+
+    // breakdown for selected month
+    const bdRaw=catKeys.map(k=>({k, label:C[k].label, color:C[k].color, val:this.catTotalForYM(k,selYM,list)})).filter(x=>x.val>0);
+    const bdSum=bdRaw.reduce((a,b)=>a+b.val,0)||1;
+    const breakdown=bdRaw.sort((a,b)=>b.val-a.val).map(x=>({ color:x.color, label:x.label,
+      amount:this.fmt(x.val), pct:(x.val/bdSum*100), pctLabel: Math.round(x.val/bdSum*100)+'%' }));
+
+    // upcoming: next charges from today within range
+    const today=this.TODAY(); const upRaw=[];
+    list.forEach(e=>{
+      for(let k=0;k<14;k++){ const ym=this.todayYM()+k; if(this.charges(e,ym)){ const d=this.chargeDate(e,ym); if(d>=today){ upRaw.push({d, e}); break; } } }
+    });
+    upRaw.sort((a,b)=>a.d-b.d);
+    const upcoming=upRaw.slice(0,6).map(o=>{ const cc=catOf(o.e.cat); return { day:o.d.getDate(), mon:ms[o.d.getMonth()], name:o.e.name,
+      catLabel:cc.label, tagBg:cc.tagBg, tagText:cc.tagText, amount:this.fmt(o.e.amount) }; });
+
+    // table rows
+    let filtered = this.state.filter==='all' ? list.slice() : list.filter(e=>e.cat===this.state.filter);
+    const sk=this.state.sortKey, sd=this.state.sortDir, dir=sd==='asc'?1:-1;
+    filtered.sort((a,b)=>{
+      if(sk==='name') return a.name.localeCompare(b.name)*dir;
+      if(sk==='amount') return (a.amount-b.amount)*dir;
+      const da=this.nextChargeOf(a), db=this.nextChargeOf(b);
+      return ((da?da.getTime():9e15)-(db?db.getTime():9e15))*dir;
+    });
+    const mapRow=(e)=>{ const nd=this.nextChargeOf(e); const cc=catOf(e.cat); return {
+      name:e.name, color:cc.color, catLabel:cc.label, tagBg:cc.tagBg, tagText:cc.tagText,
+      importo:this.fmt(e.amount), recur:this.RECUR()[e.interval], inizio:this.monYear(e), fine:this.endLabel(e),
+      method:e.method, prossimo: nd? this.shortDate(nd):'—', open:this.openRow(e.id), edit:this.editRow(e.id) }; };
+    const rows=filtered.map(mapRow);
+    const monthRows=filtered.filter(e=>this.charges(e,selYM)).map(mapRow);
+
+    const filterTabs=[{k:'all',label:'Tutte'}].concat(catKeys.map(k=>({k,label:C[k].label}))).map(t=>{
+      const on=this.state.filter===t.k;
+      return {label:t.label, click:this.setFilter(t.k), color:on?'#161616':'#525252', weight:on?600:400, bar:on?accent:'transparent'};
+    });
+    const sortIcon=(k)=>{ if(this.state.sortKey!==k) return ''; return this.state.sortDir==='asc'?arrowUp:arrowDn; };
+
+    // ----- categorie management -----
+    const catManage=catKeys.map(k=>{
+      const cm=catOf(k); const inCat=list.filter(e=>e.cat===k);
+      const monthTot=inCat.filter(e=>this.charges(e,selYM)).reduce((a,e)=>a+e.amount,0);
+      const annual=inCat.reduce((a,e)=>a+e.amount*(12/e.interval),0);
+      const canDel=inCat.length===0;
+      return { key:k, label:cm.label, color:cm.color,
+        countLabel: inCat.length+(inCat.length===1?' spesa':' spese'),
+        monthTot:this.fmt(monthTot), annualLabel:this.fmt0(annual)+' / anno',
+        onEdit:this.openEditCat(k), onDelete:this.deleteCat(k),
+        disableDel:!canDel, delColor:canDel?'#525252':'#c6c6c6',
+        delTitle: canDel?'Elimina':'Categoria in uso, non eliminabile' };
+    });
+
+    // ----- metodi di pagamento management -----
+    const bankIcon='<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1L1 5v1h14V5zM3 7v5H2v2h12v-2h-1V7h-2v5H9V7H7v5H5V7z"></path></svg>';
+    const cardIcon='<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M1 4h14v2H1zm0 3h14v5H1zm2 3h4v1H3z"></path></svg>';
+    const walletIcon='<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M2 3h10a1 1 0 0 1 1 1H2zm0 2h13v8H2zm9 3a1.2 1.2 0 1 0 0 2.4A1.2 1.2 0 0 0 11 8z"></path></svg>';
+    const methodIcon=(m)=> m.indexOf('Carta')>=0?cardIcon:(m==='PayPal'?walletIcon:bankIcon);
+    const methodDefs=(this.state.methods||[]).slice();
+    const payManage=methodDefs.map((m,idx)=>{
+      const using=list.filter(e=>e.method===m);
+      const monthTot=using.filter(e=>this.charges(e,selYM)).reduce((a,e)=>a+e.amount,0);
+      const canDel=using.length===0;
+      return { label:m, icon:methodIcon(m), countLabel: using.length+(using.length===1?' spesa':' spese'), monthTot:this.fmt(monthTot),
+        onEdit:this.openEditPay(idx), onDelete:this.deletePay(idx), disableDel:!canDel, delColor:canDel?'#525252':'#c6c6c6',
+        delTitle: canDel?'Elimina':'Tipo in uso, non eliminabile' }; });
+
+    // ----- nav -----
+    const navDefs=[
+      {label:'Panoramica', screen:'overview', icon:'<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M7 2H2v5h5zm7 0H9v5h5zM7 9H2v5h5zm7 0H9v5h5z"></path></svg>'},
+      {label:'Spese', screen:'list', icon:'<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M2 3h12v1H2zm0 4h12v1H2zm0 4h12v1H2z"></path></svg>'},
+      {label:'Categorie', screen:'catg', icon:'<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h5v5H2zm7 0h5v5H9zM2 9h5v5H2zm7 0h5v5H9z" fill="none" stroke="currentColor"></path></svg>'},
+    ];
+    const navItems=navDefs.map(n=>{
+      const on=(n.screen==='overview' && (this.state.screen==='overview' || (this.state.screen==='detail' && this.state.backTo==='overview')))
+        || (n.screen==='list' && (this.state.screen==='list' || (this.state.screen==='detail' && this.state.backTo==='list')))
+        || (n.screen==='catg' && this.state.screen==='catg');
+      return { label:n.label, icon:n.icon,
+        go: n.screen==='overview'?this.goOverview:(n.screen==='list'?this.goList:this.goCatg),
+        bg: on?'#e0e0e0':'transparent', color:'#161616', weight:on?600:400, bar:on?accent:'transparent' }; });
+
+    // detail
+    const e=list.find(x=>x.id===this.state.selectedId) || list[0] || null;
+    let detail={};
+    if(e){
+      const cm=C[e.cat]; const nd=this.nextChargeOf(e);
+      const total=this.chargesTotal(e), done=this.chargesDone(e);
+      const hasProgress = total!=null;
+      const annual = e.amount * (12/e.interval);
+      // status
+      let dStatus='Attiva', dStatusBg='#defbe6', dStatusText='#0e6027';
+      if(e.end){ const rem=this.eYM(e)-this.todayYM(); if(rem<=3){dStatus='In scadenza'; dStatusBg='#fff8e1'; dStatusText='#8a6a00';}
+        else {dStatus='Termina '+this.endLabel(e); dStatusBg='#e0e0e0'; dStatusText='#393939';} }
+      const facts=[
+        {label:'Importo', value:this.fmt(e.amount), sub:'per addebito'},
+        {label:'Ricorrenza', value:this.RECUR()[e.interval], sub:''},
+        {label:'Prossimo addebito', value: nd?this.shortDate(nd):'—', sub: nd? (nd.getDate()===this.TODAY().getDate()?'oggi':''):''},
+        {label:'Metodo', value:e.method, sub:''},
+        {label:'Data di inizio', value:this.monYear(e), sub:''},
+        {label:'Data di fine', value:this.endLabel(e), sub: e.end?'':'continuativo'},
+        {label:'Spesa annua', value:this.fmt0(annual), sub:'stimata'},
+      ];
+      // year mini bars
+      const dTotals=[]; for(let i=0;i<12;i++){ dTotals.push(this.charges(e,Y*12+i)?e.amount:0); }
+      const dMax=Math.max.apply(null,dTotals.concat([1]));
+      const dBars=dTotals.map((v,i)=>({label:ms[i].charAt(0), h: v/dMax*80, color: v>0?cm.color:'#e0e0e0'}));
+      const dYearTotal=this.fmt(dTotals.reduce((a,b)=>a+b,0));
+      // history
+      const hist=[]; const s=this.sYM(e); const lastYM = this.eYM(e)!=null? Math.min(this.eYM(e), this.todayYM()+6) : this.todayYM()+6;
+      for(let ym=s; ym<=lastYM; ym++){ if(this.charges(e,ym)){ const d=this.chargeDate(e,ym); hist.push({d}); } }
+      const past=hist.filter(h=>h.d<=today).slice(-5);
+      const future=hist.filter(h=>h.d>today).slice(0,3);
+      const checkIcon='<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M6.5 11L3 7.5l.9-.9 2.6 2.6L12 3.8l.9.9z"></path></svg>';
+      const dotIcon='<svg width="8" height="8" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="4"></circle></svg>';
+      const history=past.concat(future).reverse().map(h=>{ const paid=h.d<=today; return {
+        dateStr: h.d.toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'}),
+        statusLabel: paid?('Pagato · '+e.method):'Programmato',
+        amount: this.fmt(e.amount), amtColor: paid?'#161616':'#8d8d8d',
+        dotBg: paid?'#defbe6':'#e0e0e0', dotColor: paid?'#0e6027':'#8d8d8d', icon: paid?checkIcon:dotIcon }; });
+
+      detail={ dName:e.name, dColor:cm.color, dCatLabel:cm.label, dTagBg:cm.tagBg, dTagText:cm.tagText,
+        dStatus, dStatusBg, dStatusText, facts, hasProgress,
+        rataLabel: hasProgress ? ('Rata '+done+' di '+total+' · '+this.RECUR()[e.interval].toLowerCase()) : '',
+        progressPct: hasProgress ? Math.round(done/total*100):0,
+        progressLabel: hasProgress ? (done+' versate · '+(total-done)+' rimanenti') : '',
+        paidSoFar:this.fmt(done*e.amount), remaining:this.fmt((total-done)*e.amount),
+        dBars, dYearTotal, history };
+    }
+
+    // modal derived
+    const f=this.state.form;
+    return {
+      navOpen:this.state.navOpen, toggleNav:this.toggleNav, navItems, accent,
+      isOverview: this.state.screen==='overview', isList: this.state.screen==='list',
+      isDetail: this.state.screen==='detail', isCatg: this.state.screen==='catg',
+      monthLabel: MN[mi]+' '+Y, monthShort: ms[mi], prevMonthShort: ms[(mi+11)%12],
+      prevMonth:this.prevMonth, nextMonth:this.nextMonth, openAdd:this.openAdd,
+      kpiTotal:this.fmt(monthTotal),
+      deltaColor: up?'#da1e28':'#0e6027', deltaIcon: up?arrowUp:arrowDn,
+      deltaText: (up?'+\u00a0':'−\u00a0') + this.fmt(Math.abs(delta)).replace('€\u00a0','') + ' (' + (up?'+':'−') + Math.abs(deltaPct) + '%)',
+      activeCount, chargingCount, totalCount:list.length,
+      nextName: nx?nx.e.name:'—', nextDate: nx?this.shortDate(nx.d):'', nextAmount: nx?this.fmt(nx.e.amount):'',
+      avgMonthly:this.fmt(avg), yearTotal:this.fmt0(yearTotal),
+      trendMode, setTrendTotal:this.setTrendTotal, setTrendCat:this.setTrendCat,
+      trendTotalBg: trendMode==='total'?'#161616':'#fff', trendTotalColor: trendMode==='total'?'#fff':'#161616',
+      trendCatBg: trendMode==='category'?'#161616':'#fff', trendCatColor: trendMode==='category'?'#fff':'#161616',
+      bars, lines, dots, gridLines, clearHover:this.clearHover,
+      hoverActive, hoverLeft, hoverBottom,
+      hoverTitle: hb>=0?(MN[hb]+' '+Y):'', hoverValue: hb>=0?this.fmt(totals[hb]):'',
+      legend: catKeys.map(k=>({color:C[k].color, label:C[k].label})),
+      breakdown, upcoming, rowCount:rows.length, rows, rowH: dense?40:48,
+      monthRows, monthRowCount:monthRows.length, noMonthRows: monthRows.length===0,
+      catManage, catCount:catManage.length, payManage, payCount:payManage.length,
+      openAddCat:this.openAddCat, openAddPay:this.openAddPay,
+      catOptions: (this.state.categories||[]).map(c=>({value:c.key,label:c.label})),
+      methodOptions: (this.state.methods||[]).map(m=>({value:m,label:m})),
+      catEditorOpen:this.state.catEditor.open, payEditorOpen:this.state.payEditor.open,
+      catEditorKicker: this.state.catEditor.mode==='edit'?'Modifica':'Nuova',
+      catEditorTitle: this.state.catEditor.mode==='edit'?'Modifica categoria':'Aggiungi categoria',
+      catEditorLabel: this.state.catEditor.label, catEditorColor: this.state.catEditor.color,
+      catEditorTagBg: this.state.catEditor.tagBg, catEditorTagText: this.state.catEditor.tagText,
+      catSwatches: this.catPalette().map(p=>({color:p.color, ring: p.color===this.state.catEditor.color?'#161616':'#e0e0e0', pick:this.pickCatColor(p)})),
+      setCatLabel:this.setCatLabel, saveCat:this.saveCat, closeCatEditor:this.closeCatEditor,
+      payEditorKicker: this.state.payEditor.mode==='edit'?'Modifica':'Nuovo',
+      payEditorTitle: this.state.payEditor.mode==='edit'?'Modifica tipo di pagamento':'Aggiungi tipo di pagamento',
+      payEditorLabel: this.state.payEditor.label, setPayLabel:this.setPayLabel, savePay:this.savePay, closePayEditor:this.closePayEditor,
+      goOverview:this.goOverview, goList:this.goList, goCatg:this.goCatg, goBack:this.goBack,
+      backLabel: this.state.backTo==='list' ? 'Spese' : 'Panoramica',
+      filterTabs, sortName:this.setSort('name'), sortAmount:this.setSort('amount'), sortNext:this.setSort('next'),
+      sortNameIcon:sortIcon('name'), sortAmountIcon:sortIcon('amount'), sortNextIcon:sortIcon('next'),
+      editCurrent:this.editCurrent, deleteCurrent:this.deleteCurrent,
+      ...detail,
+      modalOpen:this.state.modalOpen, closeModal:this.closeModal, stop:this.stop,
+      modalKicker: this.state.modalMode==='edit'?'Modifica':'Nuova voce',
+      modalTitle: this.state.modalMode==='edit'?'Modifica spesa ricorrente':'Aggiungi spesa ricorrente',
+      saveLabel: this.state.modalMode==='edit'?'Salva modifiche':'Aggiungi spesa',
+      form:f, onName:this.onName, onCat:this.onCat, onAmount:this.onAmount, onInterval:this.onInterval,
+      onMethod:this.onMethod, onStart:this.onStart, onEnd:this.onEnd, onNote:this.onNote,
+      toggleHasEnd:this.toggleHasEnd, saveExpense:this.saveExpense,
+      endBg: f.hasEnd?'#e8e8e8':'#f4f4f4',
+      toggleBg: f.hasEnd?accent:'#8d8d8d', toggleX: f.hasEnd?18:2,
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+# source zip
+Gestione spese ricorrenti-handoff.zip
+
+# node
+node_modules/
+
+# env
+.env.local
+.env*.local
+
+# Next.js
+app/.next/
+app/out/
+app/next-env.d.ts
+
+# OS
+.DS_Store
