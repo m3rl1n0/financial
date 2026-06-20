@@ -254,7 +254,8 @@ export default function CadenzaApp({ initialExpenses, initialCategories, initial
   })
 
   // table rows
-  let filtered = filter === 'all' ? expenses.slice() : expenses.filter(e => e.cat === filter)
+  const activeExpenses = expenses.filter(e => eYM(e) == null || eYM(e)! >= todayYM())
+  let filtered = filter === 'all' ? activeExpenses.slice() : activeExpenses.filter(e => e.cat === filter)
   const dir = sortDir === 'asc' ? 1 : -1
   filtered.sort((a, b) => {
     if (sortKey === 'name') return a.name.localeCompare(b.name) * dir
