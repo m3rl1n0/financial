@@ -76,7 +76,12 @@ begin
   (uid, 'iCloud (piano 2)',          'abbonamenti',   2.99, 1, 2025,  8, null, null,  5, 'PayPal', 'Piano iCloud moglie — attivo da settembre 2025'),
   (uid, 'Apple (da ident. 1)',       'abbonamenti',  19.99, 1, 2025, 11, 2026,  2,   8, 'PayPal', 'Da identificare — dicembre 2025 / marzo 2026'),
   (uid, 'Apple (da ident. 2)',       'abbonamenti',  15.99, 1, 2025,  8, 2025, 10,   5, 'PayPal', 'Da identificare — settembre / novembre 2025'),
-  (uid, 'Netflix',                   'abbonamenti',   6.99, 1, 2025,  5, null, null, 28, 'PayPal', 'Piano base');
+  (uid, 'Netflix',                   'abbonamenti',   6.99, 1, 2025,  5, null, null, 28, 'PayPal', 'Piano base'),
+  -- Piani di rientro PayPal (Paga in rate)
+  (uid, 'Allianz Direct',            'assicurazioni', 44.66, 1, 2026, 4, 2027,  3,   6, 'PayPal', 'Assicurazione auto — 12 rate, acquistata 06/05/2026'),
+  (uid, 'Insta360 (rata)',           'rate',          85.93, 1, 2026, 0, 2026, 11,  17, 'PayPal', 'Insta360 Ace Pro 2 — 12 rate PayPal, acquistata 17/01/2026'),
+  (uid, 'TicketOne (rata 1)',        'rate',          34.95, 1, 2026, 3, 2026,  5,  30, 'PayPal', 'Biglietti — 3 rate, acquistata 30/04/2026'),
+  (uid, 'TicketOne (rata 2)',        'rate',          45.72, 1, 2026, 4, 2026,  6,   7, 'PayPal', 'Biglietti — 3 rate, acquistata 07/05/2026');
 
   -- ============================================================
   -- STORICO VARIAZIONI DI PREZZO
