@@ -30,6 +30,7 @@ export interface Expense {
   day: number
   method: string
   note: string
+  is_variable: boolean
   created_at: string
 }
 

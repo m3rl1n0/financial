@@ -237,10 +237,10 @@ export default function CadenzaApp({ initialExpenses, initialCategories, initial
     pct: x.val / bdSum * 100, pctLabel: Math.round(x.val / bdSum * 100) + '%'
   }))
 
-  // upcoming
+  // upcoming — escludi le spese variabili (importo non prevedibile)
   const today = TODAY()
   const upRaw: { d: Date; e: Expense }[] = []
-  expenses.forEach(e => {
+  expenses.filter(e => !e.is_variable).forEach(e => {
     for (let k = 0; k < 14; k++) {
       const ym = todayYM() + k
       if (charges(e, ym)) { const d = chargeDate(e, ym); if (d >= today) { upRaw.push({ d, e }); break } }
@@ -536,18 +536,27 @@ export default function CadenzaApp({ initialExpenses, initialCategories, initial
           {screen === 'detail' && detailExp && (() => {
             const e = detailExp
             const cm = catOf(C, e.cat)
-            const nd = nextChargeOf(e)
+            const nd = e.is_variable ? null : nextChargeOf(e)
             const total = chargesTotal(e), done = chargesDone(e)
-            const hasProgress = total != null
+            const hasProgress = total != null && !e.is_variable
             const currentAmt = nd ? getAmountForYM(e, nd.getFullYear() * 12 + nd.getMonth(), prices) : e.amount
-            const annual = currentAmt * (12 / e.interval)
+            // media ultimi 3 mesi da expense_prices per le spese variabili
+            const varPrices = e.is_variable ? prices.filter(p => p.expense_id === e.id).sort((a, b) => (b.valid_from_year * 12 + b.valid_from_month) - (a.valid_from_year * 12 + a.valid_from_month)).slice(0, 3) : []
+            const varAvg = varPrices.length > 0 ? varPrices.reduce((s, p) => s + p.amount, 0) / varPrices.length : null
+            const annual = e.is_variable ? (varAvg ?? 0) * 12 : currentAmt * (12 / e.interval)
             let dStatus = 'Attiva', dStatusBg = '#defbe6', dStatusText = '#0e6027'
             if (e.end_year) {
               const rem = eYM(e)! - todayYM()
               if (rem <= 3) { dStatus = 'In scadenza'; dStatusBg = '#fff8e1'; dStatusText = '#8a6a00' }
               else { dStatus = 'Termina ' + endLabel(e); dStatusBg = '#e0e0e0'; dStatusText = '#393939' }
             }
-            const facts = [
+            const facts = e.is_variable ? [
+              { label:'Ultimo importo', value: varPrices[0] ? fmt(varPrices[0].amount) : '—', sub:'registrato' },
+              { label:'Media ultimi 3 mesi', value: varAvg ? fmt(varAvg) : '—', sub:'stimata' },
+              { label:'Metodo', value:e.method, sub:'' },
+              { label:'Data di inizio', value:monYear(e), sub:'' },
+              { label:'Spesa annua', value: varAvg ? fmt0(annual) : '—', sub:'stimata' },
+            ] : [
               { label:'Importo', value:fmt(currentAmt), sub:'per addebito' },
               { label:'Ricorrenza', value:RECUR[e.interval], sub:'' },
               { label:'Prossimo addebito', value: nd ? shortDate(nd) : '—', sub:'' },
@@ -556,7 +565,15 @@ export default function CadenzaApp({ initialExpenses, initialCategories, initial
               { label:'Data di fine', value:endLabel(e), sub: e.end_year ? '' : 'continuativo' },
               { label:'Spesa annua', value:fmt0(annual), sub:'stimata' },
             ]
-            const dTotals = []; for (let i = 0; i < 12; i++) { const ym = Y * 12 + i; dTotals.push(charges(e, ym) ? getAmountForYM(e, ym, prices) : 0) }
+            const dTotals = []; for (let i = 0; i < 12; i++) {
+              const ym = Y * 12 + i
+              if (e.is_variable) {
+                const p = prices.find(p => p.expense_id === e.id && p.valid_from_year * 12 + p.valid_from_month === ym)
+                dTotals.push(p ? p.amount : 0)
+              } else {
+                dTotals.push(charges(e, ym) ? getAmountForYM(e, ym, prices) : 0)
+              }
+            }
             const dMax = Math.max(...dTotals, 1)
             const dBars = dTotals.map((v, i) => ({ label: ms[i].charAt(0), h: v / dMax * 80, color: v > 0 ? cm.color : '#e0e0e0' }))
             const dYearTotal = fmt(dTotals.reduce((a, b) => a + b, 0))
