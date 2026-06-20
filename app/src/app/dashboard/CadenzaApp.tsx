@@ -253,8 +253,11 @@ export default function CadenzaApp({ initialExpenses, initialCategories, initial
     return { day: o.d.getDate(), mon: ms[o.d.getMonth()], name: o.e.name, catLabel: cc.label, tagBg: cc.tag_bg, tagText: cc.tag_text, amount: fmt(getAmountForYM(o.e, upYM, prices)) }
   })
 
-  // table rows
-  const activeExpenses = expenses.filter(e => eYM(e) == null || eYM(e)! >= todayYM())
+  // table rows — filtrate per mese selezionato
+  const activeExpenses = expenses.filter(e => {
+    if (e.is_variable) return sYM(e) <= selYM && (eYM(e) == null || eYM(e)! >= selYM)
+    return charges(e, selYM)
+  })
   let filtered = filter === 'all' ? activeExpenses.slice() : activeExpenses.filter(e => e.cat === filter)
   const dir = sortDir === 'asc' ? 1 : -1
   filtered.sort((a, b) => {
