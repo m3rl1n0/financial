@@ -3,13 +3,13 @@
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import type { Expense, Category, PaymentMethod } from '@/types'
+import type { Expense, ExpensePrice, Category, PaymentMethod } from '@/types'
 import {
   MONTHS, MONTHS_SHORT, RECUR, ACCENT, YEAR,
   sYM, eYM, todayYM, TODAY,
   charges, chargeDate, fmt, fmt0, shortDate, monYear, endLabel,
   nextChargeOf, chargesTotal, chargesDone,
-  totalForYM, catTotalForYM, buildCatMap, catOf, CAT_PALETTE,
+  totalForYM, catTotalForYM, getAmountForYM, buildCatMap, catOf, CAT_PALETTE,
 } from '@/lib/cadenza'
 
 // ── SVG icons ──────────────────────────────────────────────────────────────
@@ -40,6 +40,7 @@ interface Props {
   initialExpenses: Expense[]
   initialCategories: Category[]
   initialMethods: PaymentMethod[]
+  initialPrices: ExpensePrice[]
   userInitials: string
   userId: string
 }
@@ -49,13 +50,14 @@ const btn = (bg: string, color: string, extra?: React.CSSProperties): React.CSSP
   border: 'none', background: bg, color, cursor: 'pointer', fontFamily: 'inherit', ...extra
 })
 
-export default function CadenzaApp({ initialExpenses, initialCategories, initialMethods, userInitials, userId }: Props) {
+export default function CadenzaApp({ initialExpenses, initialCategories, initialMethods, initialPrices, userInitials, userId }: Props) {
   const router = useRouter()
   const supabase = createClient()
 
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses)
   const [categories, setCategories] = useState<Category[]>(initialCategories)
   const [methods, setMethods] = useState<PaymentMethod[]>(initialMethods)
+  const [prices, setPrices] = useState<ExpensePrice[]>(initialPrices)
 
   const [screen, setScreen] = useState<Screen>('overview')
   const [monthIndex, setMonthIndex] = useState(5)
@@ -188,8 +190,8 @@ export default function CadenzaApp({ initialExpenses, initialCategories, initial
   }
 
   // ── derived data ──────────────────────────────────────────────────────────
-  const monthTotal = totalForYM(selYM, expenses)
-  const prevTotal = totalForYM(selYM - 1, expenses)
+  const monthTotal = totalForYM(selYM, expenses, prices)
+  const prevTotal = totalForYM(selYM - 1, expenses, prices)
   const delta = monthTotal - prevTotal
   const deltaPct = prevTotal > 0 ? Math.round(delta / prevTotal * 100) : 0
   const up = delta > 0
@@ -202,7 +204,7 @@ export default function CadenzaApp({ initialExpenses, initialCategories, initial
 
   const totals: number[] = []
   let yearTotal = 0
-  for (let i = 0; i < 12; i++) { const t = totalForYM(Y * 12 + i, expenses); totals.push(t); yearTotal += t }
+  for (let i = 0; i < 12; i++) { const t = totalForYM(Y * 12 + i, expenses, prices); totals.push(t); yearTotal += t }
   const avg = yearTotal / 12
   const maxTot = Math.max(...totals, 1)
   const H = 200
@@ -216,7 +218,7 @@ export default function CadenzaApp({ initialExpenses, initialCategories, initial
     lines = catKeys.map(k => ({
       color: C[k]?.color ?? '#8d8d8d',
       points: totals.map((_, i) => {
-        const v = catTotalForYM(k, Y * 12 + i, expenses)
+        const v = catTotalForYM(k, Y * 12 + i, expenses, prices)
         return xOf(i).toFixed(2) + ',' + (100 - v / maxTot * 100).toFixed(2)
       }).join(' ')
     }))
@@ -228,7 +230,7 @@ export default function CadenzaApp({ initialExpenses, initialCategories, initial
   const gridLines = [1, 0.75, 0.5, 0.25, 0].map(f => ({ label: fmt0(maxTot * f) }))
 
   // breakdown
-  const bdRaw = catKeys.map(k => ({ k, label: C[k]?.label ?? k, color: C[k]?.color ?? '#8d8d8d', val: catTotalForYM(k, selYM, expenses) })).filter(x => x.val > 0)
+  const bdRaw = catKeys.map(k => ({ k, label: C[k]?.label ?? k, color: C[k]?.color ?? '#8d8d8d', val: catTotalForYM(k, selYM, expenses, prices) })).filter(x => x.val > 0)
   const bdSum = bdRaw.reduce((a, b) => a + b.val, 0) || 1
   const breakdown = bdRaw.sort((a, b) => b.val - a.val).map(x => ({
     color: x.color, label: x.label, amount: fmt(x.val),
@@ -247,7 +249,8 @@ export default function CadenzaApp({ initialExpenses, initialCategories, initial
   upRaw.sort((a, b) => a.d.getTime() - b.d.getTime())
   const upcoming = upRaw.slice(0, 6).map(o => {
     const cc = catOf(C, o.e.cat)
-    return { day: o.d.getDate(), mon: ms[o.d.getMonth()], name: o.e.name, catLabel: cc.label, tagBg: cc.tag_bg, tagText: cc.tag_text, amount: fmt(o.e.amount) }
+    const upYM = o.d.getFullYear() * 12 + o.d.getMonth()
+    return { day: o.d.getDate(), mon: ms[o.d.getMonth()], name: o.e.name, catLabel: cc.label, tagBg: cc.tag_bg, tagText: cc.tag_text, amount: fmt(getAmountForYM(o.e, upYM, prices)) }
   })
 
   // table rows
@@ -261,7 +264,8 @@ export default function CadenzaApp({ initialExpenses, initialCategories, initial
   })
   const mapRow = (e: Expense) => {
     const nd = nextChargeOf(e); const cc = catOf(C, e.cat)
-    return { id: e.id, name: e.name, color: cc.color, catLabel: cc.label, tagBg: cc.tag_bg, tagText: cc.tag_text, importo: fmt(e.amount), recur: RECUR[e.interval], inizio: monYear(e), fine: endLabel(e), method: e.method, prossimo: nd ? shortDate(nd) : '—', e }
+    const ndYM = nd ? nd.getFullYear() * 12 + nd.getMonth() : todayYM()
+    return { id: e.id, name: e.name, color: cc.color, catLabel: cc.label, tagBg: cc.tag_bg, tagText: cc.tag_text, importo: fmt(getAmountForYM(e, ndYM, prices)), recur: RECUR[e.interval], inizio: monYear(e), fine: endLabel(e), method: e.method, prossimo: nd ? shortDate(nd) : '—', e }
   }
   const rows = filtered.map(mapRow)
   const monthRows = filtered.filter(e => charges(e, selYM)).map(mapRow)
@@ -366,7 +370,7 @@ export default function CadenzaApp({ initialExpenses, initialCategories, initial
               <div style={{ display:'flex', flexWrap:'wrap', gap:1, background:'#e0e0e0', marginBottom:1 }}>
                 <KpiCard label={`Totale di ${ms[monthIndex]}`} value={fmt(monthTotal)} sub={<span style={{ color: up ? '#da1e28' : '#0e6027', display:'flex', alignItems:'center', gap:6, fontSize:13 }}>{up ? <IconArrowUp /> : <IconArrowDown />}<span style={{ fontWeight:500 }}>{(up ? '+ ' : '− ') + fmt(Math.abs(delta)).replace('€ ', '') + ' (' + (up ? '+' : '−') + Math.abs(deltaPct) + '%)'}</span><span style={{ color:'#6f6f6f' }}>vs {ms[(monthIndex + 11) % 12]}</span></span>} flex="2 1 320px" minWidth={280} />
                 <KpiCard label="Pagamenti attivi" value={String(activeCount)} sub={`${chargingCount} addebitati a ${ms[monthIndex]}`} flex="1 1 180px" minWidth={160} />
-                <KpiCard label="Prossimo addebito" value={nx ? nx.e.name : '—'} valueSz={16} valueFw={600} sub={nx ? <span style={{ display:'flex', gap:8, alignItems:'baseline' }}><span style={{ color:'#6f6f6f', fontSize:13 }}>{shortDate(nx!.d)}</span><span style={{ fontWeight:500 }}>{fmt(nx!.e.amount)}</span></span> : ''} flex="1 1 200px" minWidth={180} />
+                <KpiCard label="Prossimo addebito" value={nx ? nx.e.name : '—'} valueSz={16} valueFw={600} sub={nx ? <span style={{ display:'flex', gap:8, alignItems:'baseline' }}><span style={{ color:'#6f6f6f', fontSize:13 }}>{shortDate(nx!.d)}</span><span style={{ fontWeight:500 }}>{fmt(getAmountForYM(nx!.e, nx!.d.getFullYear() * 12 + nx!.d.getMonth(), prices))}</span></span> : ''} flex="1 1 200px" minWidth={180} />
                 <KpiCard label="Media mensile 2026" value={fmt(avg)} valueSz={32} valueFw={300} sub={`${fmt0(yearTotal)} nell'anno`} flex="1 1 180px" minWidth={160} />
               </div>
 
@@ -504,7 +508,7 @@ export default function CadenzaApp({ initialExpenses, initialCategories, initial
               <div style={{ display:'flex', flexWrap:'wrap', gap:1, background:'#e0e0e0', marginBottom:16 }}>
                 <KpiCard label={`Totale di ${ms[monthIndex]}`} value={fmt(monthTotal)} sub={<span style={{ color: up ? '#da1e28' : '#0e6027', display:'flex', alignItems:'center', gap:6, fontSize:13 }}>{up ? <IconArrowUp /> : <IconArrowDown />}<span style={{ fontWeight:500 }}>{(up ? '+ ' : '− ') + fmt(Math.abs(delta)).replace('€ ', '')}</span><span style={{ color:'#6f6f6f' }}>vs {ms[(monthIndex + 11) % 12]}</span></span>} flex="2 1 320px" minWidth={280} />
                 <KpiCard label="Spese del mese" value={String(monthRows.length)} sub={`${activeCount} pagamenti attivi`} flex="1 1 180px" minWidth={160} />
-                <KpiCard label="Prossimo addebito" value={nx ? nx.e.name : '—'} valueSz={16} valueFw={600} sub={nx ? <span style={{ display:'flex', gap:8, alignItems:'baseline' }}><span style={{ color:'#6f6f6f', fontSize:13 }}>{shortDate(nx!.d)}</span><span style={{ fontWeight:500 }}>{fmt(nx!.e.amount)}</span></span> : ''} flex="1 1 200px" minWidth={180} />
+                <KpiCard label="Prossimo addebito" value={nx ? nx.e.name : '—'} valueSz={16} valueFw={600} sub={nx ? <span style={{ display:'flex', gap:8, alignItems:'baseline' }}><span style={{ color:'#6f6f6f', fontSize:13 }}>{shortDate(nx!.d)}</span><span style={{ fontWeight:500 }}>{fmt(getAmountForYM(nx!.e, nx!.d.getFullYear() * 12 + nx!.d.getMonth(), prices))}</span></span> : ''} flex="1 1 200px" minWidth={180} />
               </div>
               <section style={{ background:'#fff', display:'flex', flexDirection:'column' }}>
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:8, padding:'16px 24px' }}>
@@ -534,7 +538,8 @@ export default function CadenzaApp({ initialExpenses, initialCategories, initial
             const nd = nextChargeOf(e)
             const total = chargesTotal(e), done = chargesDone(e)
             const hasProgress = total != null
-            const annual = e.amount * (12 / e.interval)
+            const currentAmt = nd ? getAmountForYM(e, nd.getFullYear() * 12 + nd.getMonth(), prices) : e.amount
+            const annual = currentAmt * (12 / e.interval)
             let dStatus = 'Attiva', dStatusBg = '#defbe6', dStatusText = '#0e6027'
             if (e.end_year) {
               const rem = eYM(e)! - todayYM()
@@ -542,7 +547,7 @@ export default function CadenzaApp({ initialExpenses, initialCategories, initial
               else { dStatus = 'Termina ' + endLabel(e); dStatusBg = '#e0e0e0'; dStatusText = '#393939' }
             }
             const facts = [
-              { label:'Importo', value:fmt(e.amount), sub:'per addebito' },
+              { label:'Importo', value:fmt(currentAmt), sub:'per addebito' },
               { label:'Ricorrenza', value:RECUR[e.interval], sub:'' },
               { label:'Prossimo addebito', value: nd ? shortDate(nd) : '—', sub:'' },
               { label:'Metodo', value:e.method, sub:'' },
@@ -550,18 +555,23 @@ export default function CadenzaApp({ initialExpenses, initialCategories, initial
               { label:'Data di fine', value:endLabel(e), sub: e.end_year ? '' : 'continuativo' },
               { label:'Spesa annua', value:fmt0(annual), sub:'stimata' },
             ]
-            const dTotals = []; for (let i = 0; i < 12; i++) { dTotals.push(charges(e, Y * 12 + i) ? e.amount : 0) }
+            const dTotals = []; for (let i = 0; i < 12; i++) { const ym = Y * 12 + i; dTotals.push(charges(e, ym) ? getAmountForYM(e, ym, prices) : 0) }
             const dMax = Math.max(...dTotals, 1)
             const dBars = dTotals.map((v, i) => ({ label: ms[i].charAt(0), h: v / dMax * 80, color: v > 0 ? cm.color : '#e0e0e0' }))
             const dYearTotal = fmt(dTotals.reduce((a, b) => a + b, 0))
-            const hist: { d: Date }[] = []
+            const hist: { d: Date; ym: number }[] = []
             const lastYM = eYM(e) != null ? Math.min(eYM(e)!, todayYM() + 6) : todayYM() + 6
-            for (let ym = sYM(e); ym <= lastYM; ym++) { if (charges(e, ym)) hist.push({ d: chargeDate(e, ym) }) }
-            const past = hist.filter(h => h.d <= today).slice(-5)
-            const future = hist.filter(h => h.d > today).slice(0, 3)
+            for (let ym = sYM(e); ym <= lastYM; ym++) { if (charges(e, ym)) hist.push({ d: chargeDate(e, ym), ym }) }
+            const allPaid = hist.filter(h => h.d <= today)
+            const allFuture = hist.filter(h => h.d > today)
+            const paidSum = allPaid.reduce((a, h) => a + getAmountForYM(e, h.ym, prices), 0)
+            const remainSum = allFuture.reduce((a, h) => a + getAmountForYM(e, h.ym, prices), 0)
+            const past = allPaid.slice(-5)
+            const future = allFuture.slice(0, 3)
             const history = [...past, ...future].reverse().map(h => {
               const paid = h.d <= today
-              return { dateStr: h.d.toLocaleDateString('it-IT', { day:'numeric', month:'long', year:'numeric' }), statusLabel: paid ? ('Pagato · ' + e.method) : 'Programmato', amount: fmt(e.amount), amtColor: paid ? '#161616' : '#8d8d8d', dotBg: paid ? '#defbe6' : '#e0e0e0', dotColor: paid ? '#0e6027' : '#8d8d8d', paid }
+              const hAmt = getAmountForYM(e, h.ym, prices)
+              return { dateStr: h.d.toLocaleDateString('it-IT', { day:'numeric', month:'long', year:'numeric' }), statusLabel: paid ? ('Pagato · ' + e.method) : 'Programmato', amount: fmt(hAmt), amtColor: paid ? '#161616' : '#8d8d8d', dotBg: paid ? '#defbe6' : '#e0e0e0', dotColor: paid ? '#0e6027' : '#8d8d8d', paid }
             })
             return (
               <div style={{ maxWidth:1000, margin:'0 auto', padding:'20px 32px 64px' }}>
@@ -609,8 +619,8 @@ export default function CadenzaApp({ initialExpenses, initialCategories, initial
                         <span>{done} versate · {total! - done} rimanenti</span><span>{Math.round(done / total! * 100)}%</span>
                       </div>
                       <div style={{ display:'flex', gap:24 }}>
-                        <div><div style={{ fontSize:12, color:'#6f6f6f' }}>Pagato finora</div><div style={{ fontSize:20, fontWeight:500 }}>{fmt(done * e.amount)}</div></div>
-                        <div><div style={{ fontSize:12, color:'#6f6f6f' }}>Residuo</div><div style={{ fontSize:20, fontWeight:500 }}>{fmt((total! - done) * e.amount)}</div></div>
+                        <div><div style={{ fontSize:12, color:'#6f6f6f' }}>Pagato finora</div><div style={{ fontSize:20, fontWeight:500 }}>{fmt(paidSum)}</div></div>
+                        <div><div style={{ fontSize:12, color:'#6f6f6f' }}>Residuo</div><div style={{ fontSize:20, fontWeight:500 }}>{fmt(remainSum)}</div></div>
                       </div>
                     </section>
                   )}
@@ -672,8 +682,8 @@ export default function CadenzaApp({ initialExpenses, initialCategories, initial
                 </div>
                 {categories.map(c => {
                   const inCat = expenses.filter(e => e.cat === c.key)
-                  const monthTot = inCat.filter(e => charges(e, selYM)).reduce((a, e) => a + e.amount, 0)
-                  const annual = inCat.reduce((a, e) => a + e.amount * (12 / e.interval), 0)
+                  const monthTot = inCat.filter(e => charges(e, selYM)).reduce((a, e) => a + getAmountForYM(e, selYM, prices), 0)
+                  const annual = inCat.reduce((a, e) => a + getAmountForYM(e, todayYM(), prices) * (12 / e.interval), 0)
                   const canDel = inCat.length === 0
                   return (
                     <div key={c.id} style={{ display:'flex', alignItems:'center', gap:14, padding:'14px 24px', borderTop:'1px solid #f4f4f4' }}>
@@ -708,7 +718,7 @@ export default function CadenzaApp({ initialExpenses, initialCategories, initial
                 </div>
                 {methods.map(m => {
                   const using = expenses.filter(e => e.method === m.label)
-                  const monthTot = using.filter(e => charges(e, selYM)).reduce((a, e) => a + e.amount, 0)
+                  const monthTot = using.filter(e => charges(e, selYM)).reduce((a, e) => a + getAmountForYM(e, selYM, prices), 0)
                   const canDel = using.length === 0
                   return (
                     <div key={m.id} style={{ display:'flex', alignItems:'center', gap:14, padding:'14px 24px', borderTop:'1px solid #f4f4f4' }}>

@@ -1,4 +1,4 @@
-import type { Expense, Category } from '@/types'
+import type { Expense, ExpensePrice, Category } from '@/types'
 
 export const MONTHS = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre']
 export const MONTHS_SHORT = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic']
@@ -70,11 +70,23 @@ export function chargesDone(e: Expense): number {
   return c
 }
 
-export function totalForYM(ym: number, list: Expense[]) {
-  let t = 0; list.forEach(e => { if (charges(e, ym)) t += e.amount }); return t
+// Restituisce l'importo corretto per una spesa in un dato mese/anno.
+// Cerca prima in expense_prices, poi usa expense.amount come fallback.
+export function getAmountForYM(e: Expense, ym: number, prices: ExpensePrice[]): number {
+  const match = prices.find(p => {
+    if (p.expense_id !== e.id) return false
+    const fromYM = p.valid_from_year * 12 + p.valid_from_month
+    const toYM = p.valid_to_year != null ? p.valid_to_year * 12 + p.valid_to_month! : null
+    return ym >= fromYM && (toYM == null || ym <= toYM)
+  })
+  return match ? match.amount : e.amount
 }
-export function catTotalForYM(cat: string, ym: number, list: Expense[]) {
-  let t = 0; list.forEach(e => { if (e.cat === cat && charges(e, ym)) t += e.amount }); return t
+
+export function totalForYM(ym: number, list: Expense[], prices: ExpensePrice[]) {
+  let t = 0; list.forEach(e => { if (charges(e, ym)) t += getAmountForYM(e, ym, prices) }); return t
+}
+export function catTotalForYM(cat: string, ym: number, list: Expense[], prices: ExpensePrice[]) {
+  let t = 0; list.forEach(e => { if (e.cat === cat && charges(e, ym)) t += getAmountForYM(e, ym, prices) }); return t
 }
 
 export type CatMap = Record<string, Category>
