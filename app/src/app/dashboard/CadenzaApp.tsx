@@ -34,6 +34,8 @@ type SortKey = 'name' | 'amount' | 'next'
 interface FormState {
   name: string; cat: string; amount: string; interval: string
   start: string; hasEnd: boolean; end: string; method: string; note: string
+  isVariable: boolean
+  priceNewAmt: string; priceFrom: string  // YYYY-MM
 }
 
 interface Props {
@@ -73,7 +75,7 @@ export default function CadenzaApp({ initialExpenses, initialCategories, initial
   // modals
   const [modalOpen, setModalOpen] = useState(false)
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add')
-  const [form, setForm] = useState<FormState>({ name:'', cat: categories[0]?.key ?? 'bollette', amount:'', interval:'1', start:'2026-06-01', hasEnd:false, end:'', method: methods[0]?.label ?? 'Addebito SEPA', note:'' })
+  const [form, setForm] = useState<FormState>({ name:'', cat: categories[0]?.key ?? 'bollette', amount:'', interval:'1', start:'2026-06-01', hasEnd:false, end:'', method: methods[0]?.label ?? 'Addebito SEPA', note:'', isVariable:false, priceNewAmt:'', priceFrom:'' })
 
   const [catEditor, setCatEditor] = useState({ open:false, mode:'add' as 'add'|'edit', id:'', key:'', label:'', color: CAT_PALETTE[0].color, tag_bg: CAT_PALETTE[0].tag_bg, tag_text: CAT_PALETTE[0].tag_text })
   const [payEditor, setPayEditor] = useState({ open:false, mode:'add' as 'add'|'edit', id:'', label:'' })
@@ -93,7 +95,7 @@ export default function CadenzaApp({ initialExpenses, initialCategories, initial
   }
 
   function openAdd() {
-    setForm({ name:'', cat: categories[0]?.key ?? 'bollette', amount:'', interval:'1', start:'2026-06-01', hasEnd:false, end:'', method: methods[0]?.label ?? 'Addebito SEPA', note:'' })
+    setForm({ name:'', cat: categories[0]?.key ?? 'bollette', amount:'', interval:'1', start:'2026-06-01', hasEnd:false, end:'', method: methods[0]?.label ?? 'Addebito SEPA', note:'', isVariable:false, priceNewAmt:'', priceFrom:'' })
     setModalMode('add'); setModalOpen(true)
   }
 
@@ -105,7 +107,8 @@ export default function CadenzaApp({ initialExpenses, initialCategories, initial
       start: e.start_year + '-' + pad(e.start_month + 1) + '-' + pad(e.day),
       hasEnd: e.end_year == null,
       end: e.end_year ? (e.end_year + '-' + pad(e.end_month! + 1) + '-01') : '',
-      method: e.method, note: e.note || ''
+      method: e.method, note: e.note || '', isVariable: e.is_variable,
+      priceNewAmt: '', priceFrom: ''
     })
     setSelectedId(e.id); setModalMode('edit'); setModalOpen(true)
   }
@@ -122,16 +125,49 @@ export default function CadenzaApp({ initialExpenses, initialCategories, initial
       user_id: userId, name: form.name || 'Nuova spesa', cat: form.cat, amount: amt,
       interval: parseInt(form.interval, 10) || 1,
       start_year: sd[0], start_month: (sd[1] || 1) - 1,
-      end_year, end_month, day: sd[2] || 1, method: form.method, note: form.note
+      end_year, end_month, day: sd[2] || 1, method: form.method, note: form.note,
+      is_variable: form.isVariable
     }
     setSaving(true)
+    let expenseId = selectedId
     if (modalMode === 'edit') {
       const { data } = await supabase.from('expenses').update(payload).eq('id', selectedId).select().single()
       if (data) setExpenses(prev => prev.map(x => x.id === selectedId ? data : x))
     } else {
       const { data } = await supabase.from('expenses').insert(payload).select().single()
-      if (data) setExpenses(prev => [...prev, data])
+      if (data) { setExpenses(prev => [...prev, data]); expenseId = data.id }
     }
+
+    // gestione variazione / registrazione importo
+    const newAmt = parseFloat(String(form.priceNewAmt).replace(/\./g, '').replace(',', '.'))
+    if (form.priceFrom && !isNaN(newAmt) && newAmt > 0 && expenseId) {
+      const [fy, fm] = form.priceFrom.split('-').map(Number)
+      const fromYear = fy, fromMonth = fm - 1  // 0-indexed
+
+      if (form.isVariable) {
+        // spesa variabile: record per quel singolo mese (valid_to = valid_from)
+        await supabase.from('expense_prices').insert({
+          expense_id: expenseId, user_id: userId, amount: newAmt,
+          valid_from_year: fromYear, valid_from_month: fromMonth,
+          valid_to_year: fromYear, valid_to_month: fromMonth
+        })
+      } else {
+        // spesa fissa: chiudi il record aperto precedente e apri il nuovo
+        const prevYM = fromYear * 12 + fromMonth - 1
+        const prevYear = Math.floor(prevYM / 12), prevMonth = prevYM % 12
+        await supabase.from('expense_prices')
+          .update({ valid_to_year: prevYear, valid_to_month: prevMonth })
+          .eq('expense_id', expenseId).is('valid_to_year', null)
+        await supabase.from('expense_prices').insert({
+          expense_id: expenseId, user_id: userId, amount: newAmt,
+          valid_from_year: fromYear, valid_from_month: fromMonth,
+          valid_to_year: null, valid_to_month: null
+        })
+      }
+      const { data: newPrices } = await supabase.from('expense_prices').select('*').eq('expense_id', expenseId)
+      if (newPrices) setPrices(prev => [...prev.filter(p => p.expense_id !== expenseId), ...newPrices])
+    }
+
     setSaving(false); setModalOpen(false)
   }
 
@@ -824,6 +860,34 @@ export default function CadenzaApp({ initialExpenses, initialCategories, initial
               <FormField label="Note (facoltative)" style={{ marginTop:16 }}>
                 <textarea value={form.note} onChange={e => setForm(s => ({ ...s, note: e.target.value }))} rows={2} placeholder="Aggiungi un dettaglio…" style={{ ...inputStyle, resize:'vertical', height:'auto', padding:'8px 12px' }} />
               </FormField>
+
+              {/* toggle importo variabile */}
+              <label style={{ display:'flex', alignItems:'center', gap:10, cursor:'pointer', padding:'16px 0 4px' }}>
+                <span onClick={() => setForm(s => ({ ...s, isVariable: !s.isVariable }))} style={{ width:32, height:16, borderRadius:8, background: form.isVariable ? ACCENT : '#8d8d8d', position:'relative', transition:'background .15s', flex:'none', cursor:'pointer' }}>
+                  <span style={{ position:'absolute', top:2, left: form.isVariable ? 18 : 2, width:12, height:12, borderRadius:'50%', background:'#fff', transition:'left .15s' }} />
+                </span>
+                <span style={{ fontSize:13, color:'#525252' }}>Importo variabile (bollette, pedaggi…)</span>
+              </label>
+
+              {/* sezione registrazione/cambio importo */}
+              <div style={{ marginTop:16, padding:'16px', background:'#f4f4f4', borderLeft:'3px solid ' + ACCENT }}>
+                <div style={{ fontSize:12, fontWeight:600, color:'#525252', marginBottom:12, textTransform:'uppercase', letterSpacing:'0.32px' }}>
+                  {form.isVariable ? 'Registra importo per un mese' : (modalMode === 'edit' ? 'Cambia importo (opzionale)' : 'Importo iniziale storico (opzionale)')}
+                </div>
+                <div style={{ display:'flex', gap:12, flexWrap:'wrap' }}>
+                  <FormField label={form.isVariable ? 'Importo (€)' : 'Nuovo importo (€)'} flex="1 1 140px" style={{ marginBottom:0 }}>
+                    <input value={form.priceNewAmt} onChange={e => setForm(s => ({ ...s, priceNewAmt: e.target.value }))} inputMode="decimal" placeholder="0,00" style={{ ...inputStyle, fontFamily:'var(--font-ibm-plex-mono), monospace' }} />
+                  </FormField>
+                  <FormField label={form.isVariable ? 'Mese di riferimento' : 'A partire da'} flex="1 1 160px" style={{ marginBottom:0 }}>
+                    <input type="month" value={form.priceFrom} onChange={e => setForm(s => ({ ...s, priceFrom: e.target.value }))} style={inputStyle} />
+                  </FormField>
+                </div>
+                <div style={{ fontSize:11, color:'#8d8d8d', marginTop:8 }}>
+                  {form.isVariable
+                    ? 'Verrà registrato solo per quel mese. Lascia vuoto per non registrare nulla ora.'
+                    : 'Il vecchio importo verrà chiuso il mese precedente. Lascia vuoto per non modificare lo storico.'}
+                </div>
+              </div>
             </div>
             <div style={{ display:'flex', flex:'none' }}>
               <button onClick={() => setModalOpen(false)} style={{ flex:1, height:64, border:'none', background:'#fff', color:'#161616', cursor:'pointer', fontSize:14, textAlign:'left', padding:'0 16px', fontFamily:'inherit' }}>Annulla</button>
