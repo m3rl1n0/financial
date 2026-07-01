@@ -31,6 +31,7 @@ export interface Expense {
   method: string
   note: string
   is_variable: boolean
+  is_prestazione: boolean
   created_at: string
 }
 
