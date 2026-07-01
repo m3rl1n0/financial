@@ -131,10 +131,12 @@ export default function CadenzaApp({ initialExpenses, initialCategories, initial
     setSaving(true)
     let expenseId = selectedId
     if (modalMode === 'edit') {
-      const { data } = await supabase.from('expenses').update(payload).eq('id', selectedId).select().single()
+      const { data, error } = await supabase.from('expenses').update(payload).eq('id', selectedId).select().single()
+      if (error) { alert('Errore nel salvataggio: ' + error.message); setSaving(false); return }
       if (data) setExpenses(prev => prev.map(x => x.id === selectedId ? data : x))
     } else {
-      const { data } = await supabase.from('expenses').insert(payload).select().single()
+      const { data, error } = await supabase.from('expenses').insert(payload).select().single()
+      if (error) { alert('Errore nel salvataggio: ' + error.message); setSaving(false); return }
       if (data) { setExpenses(prev => [...prev, data]); expenseId = data.id }
     }
 
