@@ -132,12 +132,14 @@ export default function CadenzaApp({ initialExpenses, initialCategories, initial
     let expenseId = selectedId
     if (modalMode === 'edit') {
       const { data, error } = await supabase.from('expenses').update(payload).eq('id', selectedId).select().single()
-      if (error) { alert('Errore nel salvataggio: ' + error.message); setSaving(false); return }
-      if (data) setExpenses(prev => prev.map(x => x.id === selectedId ? data : x))
+      if (error) { alert('Errore: ' + error.message); setSaving(false); return }
+      if (!data) { alert('Salvataggio fallito (nessun dato restituito). Hai eseguito supabase-migration-v3.sql?'); setSaving(false); return }
+      setExpenses(prev => prev.map(x => x.id === selectedId ? data : x))
     } else {
       const { data, error } = await supabase.from('expenses').insert(payload).select().single()
-      if (error) { alert('Errore nel salvataggio: ' + error.message); setSaving(false); return }
-      if (data) { setExpenses(prev => [...prev, data]); expenseId = data.id }
+      if (error) { alert('Errore: ' + error.message); setSaving(false); return }
+      if (!data) { alert('Inserimento fallito (nessun dato restituito).'); setSaving(false); return }
+      setExpenses(prev => [...prev, data]); expenseId = data.id
     }
 
     // gestione variazione / registrazione importo
