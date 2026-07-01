@@ -809,113 +809,142 @@ export default function CadenzaApp({ initialExpenses, initialCategories, initial
       </div>
 
       {/* ── MODAL SPESA ── */}
-      {modalOpen && (
-        <div onClick={() => setModalOpen(false)} style={{ position:'fixed', inset:0, background:'rgba(22,22,22,0.6)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:50 }}>
-          <div onClick={e => e.stopPropagation()} style={{ width:560, maxWidth:'calc(100vw - 32px)', maxHeight:'calc(100vh - 64px)', background:'#fff', display:'flex', flexDirection:'column' }}>
-            <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', padding:'20px 24px 8px' }}>
-              <div>
-                <div style={{ fontSize:12, color:'#6f6f6f' }}>{modalMode === 'edit' ? 'Modifica' : 'Nuova voce'}</div>
-                <h2 style={{ margin:'4px 0 0', fontSize:20, fontWeight:400 }}>{modalMode === 'edit' ? 'Modifica spesa ricorrente' : 'Aggiungi spesa ricorrente'}</h2>
-              </div>
-              <button onClick={() => setModalOpen(false)} style={{ width:40, height:40, border:'none', background:'transparent', cursor:'pointer', color:'#161616', display:'flex', alignItems:'center', justifyContent:'center' }}><IconClose /></button>
-            </div>
-            <div style={{ padding:'8px 24px 24px', overflow:'auto' }}>
-              <FormField label="Nome della spesa">
-                <input value={form.name} onChange={e => setForm(s => ({ ...s, name: e.target.value }))} placeholder="es. Netflix, Mutuo casa…" style={inputStyle} />
-              </FormField>
-              <div style={{ display:'flex', gap:16, flexWrap:'wrap', marginBottom:16 }}>
-                <FormField label="Categoria" flex="1 1 180px">
-                  <select value={form.cat} onChange={e => { const cat = e.target.value; setForm(s => ({ ...s, cat, isPrestazione: cat === 'prestazione', isVariable: cat === 'bollette' ? s.isVariable : false })) }} style={inputStyle}>
-                    {categories.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
-                  </select>
-                </FormField>
-                <FormField label="Importo (€)" flex="1 1 140px">
-                  <input value={form.amount} onChange={e => setForm(s => ({ ...s, amount: e.target.value }))} inputMode="decimal" placeholder="0,00" style={{ ...inputStyle, fontFamily:'var(--font-ibm-plex-mono), monospace' }} />
-                </FormField>
-              </div>
-              <div style={{ display:'flex', gap:16, flexWrap:'wrap', marginBottom:16 }}>
-                <FormField label="Ricorrenza" flex="1 1 180px">
-                  <select value={form.interval} onChange={e => setForm(s => ({ ...s, interval: e.target.value }))} style={inputStyle}>
-                    <option value="1">Mensile</option>
-                    <option value="2">Bimestrale</option>
-                    <option value="3">Trimestrale</option>
-                    <option value="6">Semestrale</option>
-                    <option value="12">Annuale</option>
-                  </select>
-                </FormField>
-                <FormField label="Metodo di pagamento" flex="1 1 140px">
-                  <select value={form.method} onChange={e => setForm(s => ({ ...s, method: e.target.value }))} style={inputStyle}>
-                    {methods.map(m => <option key={m.id} value={m.label}>{m.label}</option>)}
-                  </select>
-                </FormField>
-              </div>
-              <div style={{ display:'flex', gap:16, flexWrap:'wrap', marginBottom:8 }}>
-                <FormField label="Data di inizio" flex="1 1 180px">
-                  <input type="date" value={form.start} onChange={e => setForm(s => ({ ...s, start: e.target.value }))} style={inputStyle} />
-                </FormField>
-                <FormField label="Data di fine" flex="1 1 180px">
-                  <input type="date" value={form.end} onChange={e => setForm(s => ({ ...s, end: e.target.value }))} disabled={form.hasEnd} style={{ ...inputStyle, background: form.hasEnd ? '#e8e8e8' : '#f4f4f4' }} />
-                </FormField>
-              </div>
-              <label style={{ display:'flex', alignItems:'center', gap:10, cursor:'pointer', padding:'8px 0 4px' }}>
-                <span onClick={() => setForm(s => ({ ...s, hasEnd: !s.hasEnd }))} style={{ width:32, height:16, borderRadius:8, background: form.hasEnd ? ACCENT : '#8d8d8d', position:'relative', transition:'background .15s', flex:'none', cursor:'pointer' }}>
-                  <span style={{ position:'absolute', top:2, left: form.hasEnd ? 18 : 2, width:12, height:12, borderRadius:'50%', background:'#fff', transition:'left .15s' }} />
-                </span>
-                <span style={{ fontSize:13, color:'#525252' }}>Senza data di fine (pagamento continuativo)</span>
-              </label>
-              <FormField label="Note (facoltative)" style={{ marginTop:16 }}>
-                <textarea value={form.note} onChange={e => setForm(s => ({ ...s, note: e.target.value }))} rows={2} placeholder="Aggiungi un dettaglio…" style={{ ...inputStyle, resize:'vertical', height:'auto', padding:'8px 12px' }} />
-              </FormField>
-
-              {/* toggle importo variabile — solo per Bollette */}
-              {form.cat === 'bollette' && (
-                <label style={{ display:'flex', alignItems:'center', gap:10, cursor:'pointer', padding:'16px 0 4px' }}>
-                  <span onClick={() => setForm(s => ({ ...s, isVariable: !s.isVariable }))} style={{ width:32, height:16, borderRadius:8, background: form.isVariable ? ACCENT : '#8d8d8d', position:'relative', transition:'background .15s', flex:'none', cursor:'pointer' }}>
-                    <span style={{ position:'absolute', top:2, left: form.isVariable ? 18 : 2, width:12, height:12, borderRadius:'50%', background:'#fff', transition:'left .15s' }} />
-                  </span>
-                  <span style={{ fontSize:13, color:'#525252' }}>Importo variabile (es. luce, gas, pedaggi…)</span>
-                </label>
-              )}
-
-              {/* sezione registrazione/cambio importo */}
-              <div style={{ marginTop:16, padding:'16px', background:'#f4f4f4', borderLeft:'3px solid ' + ACCENT }}>
-                <div style={{ fontSize:12, fontWeight:600, color:'#525252', marginBottom:12, textTransform:'uppercase', letterSpacing:'0.32px' }}>
-                  {(form.isVariable || form.isPrestazione) ? 'Registra importo per un mese' : (modalMode === 'edit' ? 'Cambia importo (opzionale)' : 'Importo iniziale storico (opzionale)')}
+      {modalOpen && (() => {
+        // Tipo di spesa — guida quali campi mostrare
+        const isPrest = form.isPrestazione
+        const isBollVar = form.cat === 'bollette' && form.isVariable
+        const needsAmount = !isPrest && !isBollVar          // importo fisso visibile
+        const needsInterval = !isPrest                      // ricorrenza visibile
+        const needsEndDate = !isPrest && !isBollVar         // data fine visibile
+        const needsPriceSection = true                      // sempre visibile (ma titolo e campi cambiano)
+        const priceSection = isPrest
+          ? { title: 'Sedute di questo mese', amtLabel: 'Importo per seduta (€)', hint: 'Registra le sedute del mese. Lascia vuoto se non hai ancora i dati.' }
+          : isBollVar
+            ? { title: 'Importo di questo mese', amtLabel: 'Importo (€)', hint: 'Verrà registrato solo per quel mese. Lascia vuoto per non registrare nulla ora.' }
+            : { title: modalMode === 'edit' ? 'Modifica importo (opzionale)' : 'Storico importo (opzionale)', amtLabel: 'Importo (€)', hint: 'Chiude il valore precedente il mese prima. Lascia vuoto per non toccare lo storico.' }
+        return (
+          <div onClick={() => setModalOpen(false)} style={{ position:'fixed', inset:0, background:'rgba(22,22,22,0.6)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:50 }}>
+            <div onClick={e => e.stopPropagation()} style={{ width:560, maxWidth:'calc(100vw - 32px)', maxHeight:'calc(100vh - 64px)', background:'#fff', display:'flex', flexDirection:'column' }}>
+              <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', padding:'20px 24px 8px', flex:'none' }}>
+                <div>
+                  <div style={{ fontSize:12, color:'#6f6f6f' }}>{modalMode === 'edit' ? 'Modifica' : 'Nuova voce'}</div>
+                  <h2 style={{ margin:'4px 0 0', fontSize:20, fontWeight:400 }}>
+                    {isPrest ? (modalMode === 'edit' ? 'Modifica prestazione' : 'Aggiungi prestazione')
+                     : isBollVar ? (modalMode === 'edit' ? 'Modifica bolletta' : 'Aggiungi bolletta')
+                     : (modalMode === 'edit' ? 'Modifica spesa ricorrente' : 'Aggiungi spesa ricorrente')}
+                  </h2>
                 </div>
-                <div style={{ display:'flex', gap:12, flexWrap:'wrap' }}>
-                  <FormField label={form.isPrestazione ? 'Importo per seduta (€)' : (form.isVariable ? 'Importo (€)' : 'Nuovo importo (€)')} flex="1 1 130px" style={{ marginBottom:0 }}>
-                    <input value={form.priceNewAmt} onChange={e => setForm(s => ({ ...s, priceNewAmt: e.target.value }))} inputMode="decimal" placeholder="0,00" style={{ ...inputStyle, fontFamily:'var(--font-ibm-plex-mono), monospace' }} />
+                <button onClick={() => setModalOpen(false)} style={{ width:40, height:40, border:'none', background:'transparent', cursor:'pointer', color:'#161616', display:'flex', alignItems:'center', justifyContent:'center' }}><IconClose /></button>
+              </div>
+              <div style={{ padding:'8px 24px 24px', overflow:'auto' }}>
+
+                {/* ── Riga 1: Nome + Categoria ── */}
+                <div style={{ display:'flex', gap:16, flexWrap:'wrap' }}>
+                  <FormField label="Nome" flex="2 1 200px">
+                    <input value={form.name} onChange={e => setForm(s => ({ ...s, name: e.target.value }))} placeholder={isPrest ? 'es. Psicologo, Fisioterapia…' : 'es. Netflix, Mutuo casa…'} style={inputStyle} />
                   </FormField>
-                  {form.isPrestazione && (
-                    <FormField label="N. sedute" flex="0 0 90px" style={{ marginBottom:0 }}>
-                      <input value={form.priceQty} onChange={e => setForm(s => ({ ...s, priceQty: e.target.value }))} inputMode="numeric" placeholder="1" style={{ ...inputStyle, fontFamily:'var(--font-ibm-plex-mono), monospace' }} />
-                    </FormField>
-                  )}
-                  <FormField label={(form.isVariable || form.isPrestazione) ? 'Mese di riferimento' : 'A partire da'} flex="1 1 150px" style={{ marginBottom:0 }}>
-                    <input type="month" value={form.priceFrom} onChange={e => setForm(s => ({ ...s, priceFrom: e.target.value }))} style={inputStyle} />
+                  <FormField label="Categoria" flex="1 1 150px">
+                    <select value={form.cat} onChange={e => { const cat = e.target.value; setForm(s => ({ ...s, cat, isPrestazione: cat === 'prestazione', isVariable: cat === 'bollette' ? s.isVariable : false })) }} style={inputStyle}>
+                      {categories.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+                    </select>
                   </FormField>
                 </div>
-                {form.isPrestazione && form.priceNewAmt && form.priceQty && (
-                  <div style={{ fontSize:12, color:ACCENT, marginTop:8, fontFamily:'var(--font-ibm-plex-mono), monospace' }}>
-                    Totale: {(() => { const a = parseFloat(String(form.priceNewAmt).replace(',','.')); const q = parseInt(form.priceQty)||1; return isNaN(a) ? '—' : '€ '+(a*q).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2}) })()}
+
+                {/* ── Toggle importo variabile — solo Bollette ── */}
+                {form.cat === 'bollette' && (
+                  <label style={{ display:'flex', alignItems:'center', gap:10, cursor:'pointer', padding:'4px 0 16px' }}>
+                    <span onClick={() => setForm(s => ({ ...s, isVariable: !s.isVariable }))} style={{ width:32, height:16, borderRadius:8, background: form.isVariable ? ACCENT : '#8d8d8d', position:'relative', transition:'background .15s', flex:'none', cursor:'pointer' }}>
+                      <span style={{ position:'absolute', top:2, left: form.isVariable ? 18 : 2, width:12, height:12, borderRadius:'50%', background:'#fff', transition:'left .15s' }} />
+                    </span>
+                    <span style={{ fontSize:13, color:'#525252' }}>Importo variabile — cambia ogni volta (luce, gas, pedaggi…)</span>
+                  </label>
+                )}
+
+                {/* ── Importo fisso + Ricorrenza — nascosti per Prestazione e Bolletta variabile ── */}
+                {(needsAmount || needsInterval) && (
+                  <div style={{ display:'flex', gap:16, flexWrap:'wrap' }}>
+                    {needsAmount && (
+                      <FormField label="Importo (€)" flex="1 1 130px">
+                        <input value={form.amount} onChange={e => setForm(s => ({ ...s, amount: e.target.value }))} inputMode="decimal" placeholder="0,00" style={{ ...inputStyle, fontFamily:'var(--font-ibm-plex-mono), monospace' }} />
+                      </FormField>
+                    )}
+                    {needsInterval && (
+                      <FormField label="Frequenza" flex="1 1 150px">
+                        <select value={form.interval} onChange={e => setForm(s => ({ ...s, interval: e.target.value }))} style={inputStyle}>
+                          <option value="1">Mensile</option>
+                          <option value="2">Bimestrale</option>
+                          <option value="3">Trimestrale</option>
+                          <option value="6">Semestrale</option>
+                          <option value="12">Annuale</option>
+                        </select>
+                      </FormField>
+                    )}
                   </div>
                 )}
-                <div style={{ fontSize:11, color:'#8d8d8d', marginTop:8 }}>
-                  {(form.isVariable || form.isPrestazione)
-                    ? 'Verrà registrato solo per quel mese. Lascia vuoto per non registrare nulla ora.'
-                    : 'Il vecchio importo verrà chiuso il mese precedente. Lascia vuoto per non modificare lo storico.'}
+
+                {/* ── Date + metodo ── */}
+                <div style={{ display:'flex', gap:16, flexWrap:'wrap' }}>
+                  <FormField label="Data di inizio" flex="1 1 150px">
+                    <input type="date" value={form.start} onChange={e => setForm(s => ({ ...s, start: e.target.value }))} style={inputStyle} />
+                  </FormField>
+                  {needsEndDate && (
+                    <FormField label="Data di fine" flex="1 1 150px">
+                      <input type="date" value={form.end} onChange={e => setForm(s => ({ ...s, end: e.target.value }))} disabled={form.hasEnd} style={{ ...inputStyle, background: form.hasEnd ? '#e8e8e8' : '#f4f4f4' }} />
+                    </FormField>
+                  )}
+                  <FormField label="Metodo di pagamento" flex="1 1 150px">
+                    <select value={form.method} onChange={e => setForm(s => ({ ...s, method: e.target.value }))} style={inputStyle}>
+                      {methods.map(m => <option key={m.id} value={m.label}>{m.label}</option>)}
+                    </select>
+                  </FormField>
                 </div>
+
+                {/* ── Toggle senza data fine — solo per spese con data fine ── */}
+                {needsEndDate && (
+                  <label style={{ display:'flex', alignItems:'center', gap:10, cursor:'pointer', padding:'0 0 16px' }}>
+                    <span onClick={() => setForm(s => ({ ...s, hasEnd: !s.hasEnd }))} style={{ width:32, height:16, borderRadius:8, background: form.hasEnd ? ACCENT : '#8d8d8d', position:'relative', transition:'background .15s', flex:'none', cursor:'pointer' }}>
+                      <span style={{ position:'absolute', top:2, left: form.hasEnd ? 18 : 2, width:12, height:12, borderRadius:'50%', background:'#fff', transition:'left .15s' }} />
+                    </span>
+                    <span style={{ fontSize:13, color:'#525252' }}>Senza data di fine (continuativo)</span>
+                  </label>
+                )}
+
+                {/* ── Note ── */}
+                <FormField label="Note (facoltative)">
+                  <textarea value={form.note} onChange={e => setForm(s => ({ ...s, note: e.target.value }))} rows={2} placeholder="Aggiungi un dettaglio…" style={{ ...inputStyle, resize:'vertical', height:'auto', padding:'8px 12px' }} />
+                </FormField>
+
+                {/* ── Sezione registrazione importo / sedute ── */}
+                <div style={{ marginTop:8, padding:'16px', background:'#f4f4f4', borderLeft:'3px solid ' + ACCENT }}>
+                  <div style={{ fontSize:12, fontWeight:600, color:'#525252', marginBottom:12, textTransform:'uppercase', letterSpacing:'0.32px' }}>{priceSection.title}</div>
+                  <div style={{ display:'flex', gap:12, flexWrap:'wrap' }}>
+                    <FormField label={priceSection.amtLabel} flex="1 1 120px" style={{ marginBottom:0 }}>
+                      <input value={form.priceNewAmt} onChange={e => setForm(s => ({ ...s, priceNewAmt: e.target.value }))} inputMode="decimal" placeholder="0,00" style={{ ...inputStyle, fontFamily:'var(--font-ibm-plex-mono), monospace' }} />
+                    </FormField>
+                    {isPrest && (
+                      <FormField label="N. sedute" flex="0 0 80px" style={{ marginBottom:0 }}>
+                        <input value={form.priceQty} onChange={e => setForm(s => ({ ...s, priceQty: e.target.value }))} inputMode="numeric" placeholder="1" style={{ ...inputStyle, fontFamily:'var(--font-ibm-plex-mono), monospace' }} />
+                      </FormField>
+                    )}
+                    <FormField label="Mese" flex="1 1 140px" style={{ marginBottom:0 }}>
+                      <input type="month" value={form.priceFrom} onChange={e => setForm(s => ({ ...s, priceFrom: e.target.value }))} style={inputStyle} />
+                    </FormField>
+                  </div>
+                  {isPrest && form.priceNewAmt && form.priceQty && (() => { const a = parseFloat(String(form.priceNewAmt).replace(',','.')); const q = parseInt(form.priceQty)||1; return !isNaN(a) && a > 0 ? <div style={{ fontSize:12, color:ACCENT, marginTop:8, fontFamily:'var(--font-ibm-plex-mono), monospace' }}>Totale: € {(a*q).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2})}</div> : null })()}
+                  <div style={{ fontSize:11, color:'#8d8d8d', marginTop:8 }}>{priceSection.hint}</div>
+                </div>
+
+              </div>
+              <div style={{ display:'flex', flex:'none' }}>
+                <button onClick={() => setModalOpen(false)} style={{ flex:1, height:64, border:'none', background:'#fff', color:'#161616', cursor:'pointer', fontSize:14, textAlign:'left', padding:'0 16px', fontFamily:'inherit' }}>Annulla</button>
+                <button onClick={saveExpense} disabled={saving} style={{ flex:1, height:64, border:'none', background:ACCENT, color:'#fff', cursor:'pointer', fontSize:14, textAlign:'left', padding:'0 16px', fontFamily:'inherit' }}>
+                  {saving ? 'Salvataggio…' : modalMode === 'edit' ? 'Salva modifiche' : 'Aggiungi spesa'}
+                </button>
               </div>
             </div>
-            <div style={{ display:'flex', flex:'none' }}>
-              <button onClick={() => setModalOpen(false)} style={{ flex:1, height:64, border:'none', background:'#fff', color:'#161616', cursor:'pointer', fontSize:14, textAlign:'left', padding:'0 16px', fontFamily:'inherit' }}>Annulla</button>
-              <button onClick={saveExpense} disabled={saving} style={{ flex:1, height:64, border:'none', background:ACCENT, color:'#fff', cursor:'pointer', fontSize:14, textAlign:'left', padding:'0 16px', fontFamily:'inherit' }}>
-                {saving ? 'Salvataggio…' : modalMode === 'edit' ? 'Salva modifiche' : 'Aggiungi spesa'}
-              </button>
-            </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       {/* ── MODAL CATEGORIA ── */}
       {catEditor.open && (
