@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Expense, ExpensePrice, Category, PaymentMethod } from '@/types'
 import {
-  MONTHS, MONTHS_SHORT, RECUR, ACCENT, YEAR,
+  MONTHS, MONTHS_SHORT, RECUR, ACCENT,
   sYM, eYM, todayYM, TODAY,
   charges, chargeDate, fmt, fmt0, shortDate, monYear, endLabel,
   nextChargeOf, chargesTotal, chargesDone,
@@ -62,7 +62,7 @@ export default function CadenzaApp({ initialExpenses, initialCategories, initial
   const [prices, setPrices] = useState<ExpensePrice[]>(initialPrices)
 
   const [screen, setScreen] = useState<Screen>('overview')
-  const [monthIndex, setMonthIndex] = useState(5)
+  const [monthIndex, setMonthIndex] = useState(() => new Date().getMonth())
   const [selectedId, setSelectedId] = useState<string>(initialExpenses[0]?.id ?? '')
   const [backTo, setBackTo] = useState<Screen>('overview')
   const [navOpen, setNavOpen] = useState(true)
@@ -75,7 +75,7 @@ export default function CadenzaApp({ initialExpenses, initialCategories, initial
   // modals
   const [modalOpen, setModalOpen] = useState(false)
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add')
-  const [form, setForm] = useState<FormState>({ name:'', cat: categories[0]?.key ?? 'bollette', amount:'', interval:'1', start:'2026-06-01', hasEnd:false, end:'', method: methods[0]?.label ?? 'Addebito SEPA', note:'', isVariable:false, priceNewAmt:'', priceFrom:'' })
+  const [form, setForm] = useState<FormState>({ name:'', cat: categories[0]?.key ?? 'bollette', amount:'', interval:'1', start:(() => { const d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01' })(), hasEnd:false, end:'', method: methods[0]?.label ?? 'Addebito SEPA', note:'', isVariable:false, priceNewAmt:'', priceFrom:'' })
 
   const [catEditor, setCatEditor] = useState({ open:false, mode:'add' as 'add'|'edit', id:'', key:'', label:'', color: CAT_PALETTE[0].color, tag_bg: CAT_PALETTE[0].tag_bg, tag_text: CAT_PALETTE[0].tag_text })
   const [payEditor, setPayEditor] = useState({ open:false, mode:'add' as 'add'|'edit', id:'', label:'' })
@@ -84,7 +84,7 @@ export default function CadenzaApp({ initialExpenses, initialCategories, initial
 
   // ── helpers ───────────────────────────────────────────────────────────────
   const C = buildCatMap(categories)
-  const Y = YEAR
+  const Y = new Date().getFullYear()
   const ms = MONTHS_SHORT
   const selYM = Y * 12 + monthIndex
 
@@ -95,7 +95,7 @@ export default function CadenzaApp({ initialExpenses, initialCategories, initial
   }
 
   function openAdd() {
-    setForm({ name:'', cat: categories[0]?.key ?? 'bollette', amount:'', interval:'1', start:'2026-06-01', hasEnd:false, end:'', method: methods[0]?.label ?? 'Addebito SEPA', note:'', isVariable:false, priceNewAmt:'', priceFrom:'' })
+    setForm({ name:'', cat: categories[0]?.key ?? 'bollette', amount:'', interval:'1', start:(() => { const d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01' })(), hasEnd:false, end:'', method: methods[0]?.label ?? 'Addebito SEPA', note:'', isVariable:false, priceNewAmt:'', priceFrom:'' })
     setModalMode('add'); setModalOpen(true)
   }
 
@@ -115,7 +115,7 @@ export default function CadenzaApp({ initialExpenses, initialCategories, initial
 
   async function saveExpense() {
     const amt = parseFloat(String(form.amount).replace(/\./g, '').replace(',', '.')) || 0
-    const sd = (form.start || '2026-06-01').split('-').map(Number)
+    const sd = (form.start || (() => { const d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01' })()).split('-').map(Number)
     let end_year = null, end_month = null
     if (!form.hasEnd && form.end) {
       const ed = form.end.split('-').map(Number)
@@ -967,7 +967,7 @@ function MonthPicker({ monthIndex, onChange }: { monthIndex: number; onChange: (
   return (
     <div style={{ display:'flex', alignItems:'center', border:'1px solid #e0e0e0', background:'#fff', height:40 }}>
       <button onClick={() => onChange(Math.max(0, monthIndex - 1))} style={{ width:40, height:40, border:'none', background:'transparent', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'#161616' }}><IconChevLeft /></button>
-      <div style={{ minWidth:128, textAlign:'center', fontSize:14, fontWeight:500 }}>{MONTHS[monthIndex]} {YEAR}</div>
+      <div style={{ minWidth:128, textAlign:'center', fontSize:14, fontWeight:500 }}>{MONTHS[monthIndex]} {new Date().getFullYear()}</div>
       <button onClick={() => onChange(Math.min(11, monthIndex + 1))} style={{ width:40, height:40, border:'none', background:'transparent', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'#161616' }}><IconChevRight /></button>
     </div>
   )

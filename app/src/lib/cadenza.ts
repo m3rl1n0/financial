@@ -4,12 +4,10 @@ export const MONTHS = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','
 export const MONTHS_SHORT = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic']
 export const RECUR: Record<number, string> = {1:'Mensile',2:'Bimestrale',3:'Trimestrale',6:'Semestrale',12:'Annuale'}
 export const ACCENT = '#0f62fe'
-export const YEAR = 2026
-
 export function sYM(e: Expense) { return e.start_year * 12 + e.start_month }
 export function eYM(e: Expense) { return e.end_year != null ? e.end_year * 12 + e.end_month! : null }
-export function todayYM() { return YEAR * 12 + 5 }
-export function TODAY() { return new Date(2026, 5, 19) }
+export function TODAY() { return new Date() }
+export function todayYM() { const d = new Date(); return d.getFullYear() * 12 + d.getMonth() }
 
 export function charges(e: Expense, ym: number) {
   const s = sYM(e), en = eYM(e)
